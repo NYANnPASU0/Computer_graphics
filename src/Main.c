@@ -3,6 +3,41 @@
 #include <float.h>
 #include <windows.h>
 
+typedef struct {
+    double x, y, z;
+} Vector;
+
+// Разность векторов
+Vector sub(Vector a, Vector b) {
+    Vector v = {a.x - b.x, a.y - b.y, a.z - b.z};
+    return v;
+}
+
+// Скалярное произведение
+double dot(Vector v, Vector w) {
+    return v.x * w.x + v.y * w.y + v.z * w.z;
+}
+
+// Векторное произведение
+Vector cross(Vector v, Vector w) {
+    Vector r = {
+        v.y * w.z - v.z * w.y,
+        v.z * w.x - v.x * w.z,
+        v.x * w.y - v.y * w.x
+    };
+    return r;
+}
+
+// Длина вектора
+double len(Vector v) {
+    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+// Проверка на ноль
+int is_zero(double x) {
+    return fabs(x) < DBL_EPSILON;
+}
+
 void is_same_side(double A, double B, double C, double x1, double y1, double x2, double y2); //1
 void intersection(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy);
 void is_same_space(double A, double B, double C, double D, double x1, double y1, double z1, double x2, double y2, double z2);//4
