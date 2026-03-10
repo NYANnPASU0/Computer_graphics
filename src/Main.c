@@ -3,45 +3,42 @@
 #include <float.h>
 #include <windows.h>
 
+Point vector(Point from, Point to);
+Point cross_product(Point a, Point b);
+double dot_product(Point a, Point b);
+
+void is_same_side(double A, double B, double C, double x1, double y1, double x2, double y2); //1
+void intersection(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy); //2
+int is_point_inside_angle(Point A, Point B, Point C, Point D); //3
+void is_same_space(double A, double B, double C, double D, double x1, double y1, double z1, double x2, double y2, double z2);//4
+
 typedef struct {
     double x, y, z;
-} Vector;
+} Point;
 
-// Разность векторов
-Vector sub(Vector a, Vector b) {
-    Vector v = {a.x - b.x, a.y - b.y, a.z - b.z};
+Point vector(Point from, Point to) {
+    Point v;
+    v.x = to.x - from.x;
+    v.y = to.y - from.y;
+    v.z = to.z - from.z;
     return v;
 }
 
-// Скалярное произведение
-double dot(Vector v, Vector w) {
-    return v.x * w.x + v.y * w.y + v.z * w.z;
+//векторное произведение
+Point cross_product(Point a, Point b) {
+    Point result;
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
+    return result;
 }
 
-// Векторное произведение
-Vector cross(Vector v, Vector w) {
-    Vector r = {
-        v.y * w.z - v.z * w.y,
-        v.z * w.x - v.x * w.z,
-        v.x * w.y - v.y * w.x
-    };
-    return r;
+//скалярное произведение
+double dot_product(Point a, Point b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-// Длина вектора
-double len(Vector v) {
-    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-}
-
-// Проверка на ноль
-int is_zero(double x) {
-    return fabs(x) < DBL_EPSILON;
-}
-
-void is_same_side(double A, double B, double C, double x1, double y1, double x2, double y2); //1
-void intersection(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy);
-void is_same_space(double A, double B, double C, double D, double x1, double y1, double z1, double x2, double y2, double z2);//4
-
+//1
 void is_same_side(double A, double B, double C, double x1, double y1, double x2, double y2)
 {
     double check_1 = A * x1 + B * y1 + C;
@@ -77,12 +74,28 @@ void is_same_side(double A, double B, double C, double x1, double y1, double x2,
     }
 }
 
+//2
 void intersection(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy)
 {
 
 }
 
 
+//3
+int is_point_inside_angle(Point A, Point B, Point C, Point D)
+{
+    Point BA = vector(B, A);
+    Point BC = vector(B, C);
+    Point BD = vector(B, D);
+
+    //смешанное произведение
+    Point v = cross_product(BA, BC);
+    double is_compl = dot_product(v, BD);
+}
+
+
+
+//4
 void is_same_space(double A, double B, double C, double D, double x1, double y1, double z1, 
     double x2, double y2, double z2)
 {
