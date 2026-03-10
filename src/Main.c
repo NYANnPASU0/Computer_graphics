@@ -3,6 +3,11 @@
 #include <float.h>
 #include <windows.h>
 
+typedef struct {
+    double x, y, z;
+} Point;
+
+
 Point vector(Point from, Point to);
 Point cross_product(Point a, Point b);
 double dot_product(Point a, Point b);
@@ -11,10 +16,6 @@ void is_same_side(double A, double B, double C, double x1, double y1, double x2,
 void intersection(double ax, double ay, double bx, double by, double cx, double cy, double dx, double dy); //2
 int is_point_inside_angle(Point A, Point B, Point C, Point D); //3
 void is_same_space(double A, double B, double C, double D, double x1, double y1, double z1, double x2, double y2, double z2);//4
-
-typedef struct {
-    double x, y, z;
-} Point;
 
 Point vector(Point from, Point to) {
     Point v;
@@ -91,6 +92,27 @@ int is_point_inside_angle(Point A, Point B, Point C, Point D)
     //смешанное произведение
     Point v = cross_product(BA, BC);
     double is_compl = dot_product(v, BD);
+
+     if (fabs(is_compl) > DBL_EPSILON) {
+        printf("Точки не лежат в одной плоскости, соответственно т.D лежит вне угла ABC");
+        return -1;
+    }
+
+    double sign1 = dot_product(cross_product(BA, BD), v);
+    
+    if (sign1 <= DBL_EPSILON) {
+        printf("Точка НЕ лежит внутри угла ABC");
+        return -1;
+    }
+
+    double sign2 = dot_product(cross_product(BC, BD), v);
+    
+    if (sign2 >= DBL_EPSILON) {
+        printf("Точка НЕ лежит внутри угла ABC");
+        return -1;
+    }
+
+    return 1;
 }
 
 
@@ -174,15 +196,27 @@ int main()
             printf("Enter the coordinates of the D point on the line (dx, dy)\n");
             scanf("%lf %lf", &dx, &dy);
             
-            // Здесь нужно добавить реализацию для case 2
-            printf("Case 2 is not implemented yet\n");
+            //--------------
             break;
         }
         
         case 3:
         {
-            // Здесь нужно добавить реализацию для case 3
-            printf("Case 3 is not implemented yet\n");
+            Point A, B, C, D;
+            printf("Введите координаты точки A в пространстве (x1, y1, z1)\n");
+            scanf("%lf %lf %lf", &A.x, &A.y, &A.z);
+            
+            printf("Введите координаты точки B в пространстве (x2, y2, z2)\n");
+            scanf("%lf %lf %lf", &B.x, &B.y, &B.z);
+            
+            printf("Введите координаты точки C в пространстве (x3, y3, z3)\n");
+            scanf("%lf %lf %lf", &C.x, &C.y, &C.z);
+            
+            printf("Введите координаты точки D в пространстве (x4, y4, z4)\n");
+            scanf("%lf %lf %lf", &D.x, &D.y, &D.z);
+
+            if(is_point_inside_angle(A, B, C, D) == 1) printf("Точка D лежит внутри угла ABC");
+
             break;
         }
         
