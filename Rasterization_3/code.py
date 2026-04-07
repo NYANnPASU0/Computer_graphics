@@ -3,13 +3,23 @@ from tkinter import ttk, simpledialog
 import math
 
 #1
+class Point:
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+
 class Section:
+    def __init__(self, a: Point, b: Point):
+        self.a = a
+        self.b = b
+
+class Rasterization_section:
     def __init__(self, root):
         self.root = root
         self.root.title("Растеризация отрезка")
-        self.root.geometry("900x900")
+        self.root.geometry("900x700")
         
-        self.cell = 20 
+        self.cell = 35 
         self.width = 900
         self.height = 900
 
@@ -39,5 +49,5 @@ class Section:
 
 if __name__ == "__main__":
     window = tk.Tk()
-    app = Section(window)
+    app = Rasterization_section(window)
     window.mainloop()       
