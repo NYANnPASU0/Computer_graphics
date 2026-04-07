@@ -31,15 +31,16 @@ class Rasterization_section:
     def __init__(self, root):
         self.root = root
         self.root.title("Растеризация отрезка")
-        self.root.geometry("900x700")
+        self.root.geometry("1000x700")
         
-        self.cell = 35 
+        self.cell = 30
 
         self.section = None
 
         self.offset_x = 500 
         self.offset_y = 350
 
+        self.input_fields()
         self.draw_grid()
 
 
@@ -53,7 +54,7 @@ class Rasterization_section:
         if self.section:
             min_x, min_y, max_x, max_y = self.section.get_borders(indent=3)
         else:
-            min_x, min_y, max_x, max_y = -10, -10, 10, 10
+            min_x, min_y, max_x, max_y = -15, -15, 15, 15
         
         width_m = (max_x - min_x) * self.cell
         height_m = (max_y - min_y) * self.cell
@@ -62,11 +63,11 @@ class Rasterization_section:
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         for i in range(0, width_m):
-            if i % 35 == 0:
+            if i % 30 == 0:
                 self.canvas.create_line(0, i, height_m, i, fill='azure3', tags="axes")
 
         for i in range(0, height_m):
-            if i % 35 == 0:
+            if i % 30 == 0:
                 self.canvas.create_line(i, 0, i, width_m, fill='azure3', tags="axes")
 
         y_zero = (-min_y) * self.cell
@@ -93,7 +94,23 @@ class Rasterization_section:
                 self.canvas.create_text(x_zero - 15, y_pixel, text=str(y), fill='gray', font=('Arial', 9))
     
         if 0 <= x_zero <= width_m and 0 <= y_zero <= height_m:
-            self.canvas.create_text(x_zero + 5, y_zero + 15, text="0", fill='gray', font=('Arial', 10, 'bold'))
+            self.canvas.create_text(x_zero + 5, y_zero + 15, text="0",
+                                    fill='gray', font=('Arial', 10, 'bold'))
+
+    def input_fields(self):
+
+        input_panel = ttk.LabelFrame(self.root,  padding=10)
+        input_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
+
+        ttk.Label(input_panel, text="т. A:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(1))
+
+        frame_a = ttk.Frame(input_panel)
+        frame_a.pack(fill=tk.X, pady=(0,10))
+
+        ttk.Label(frame_a, text="X:").pack(side=tk.LEFT, padx=(0,5))
+        self.ax_entry = ttk.Entry(frame_a, width=10)
+        self.ax_entry.pack(side=tk.LEFT, padx=(0,10))
+
 
 if __name__ == "__main__":
     window = tk.Tk()
