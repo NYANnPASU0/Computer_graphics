@@ -1,8 +1,7 @@
 import tkinter as tk
-from tkinter import ttk, simpledialog
+from tkinter import ttk
 import math
 
-#1
 class Point:
     def __init__(self, x: int, y: int):
         self.x = x
@@ -13,7 +12,7 @@ class Section:
         self.a = a
         self.b = b
 
-    def get_borders(self, indent: int = 3): #для правильного отображения координатной сетки
+    def get_borders(self, indent: int = 3):
         min_x = min(self.a.x, self.b.x)
         min_y = min(self.a.y, self.b.y)
         max_x = max(self.a.x, self.b.x)
@@ -31,88 +30,162 @@ class Rasterization_section:
     def __init__(self, root):
         self.root = root
         self.root.title("Растеризация отрезка")
-        self.root.geometry("1000x700")
+        self.root.geometry("950x700")
         
         self.cell = 30
-
         self.section = None
-
-        self.offset_x = 500 
-        self.offset_y = 350
-
+        
+        self.canvas_width = 700
+        self.canvas_height = 700
+        
         self.input_fields()
+        
+        self.canvas_container = ttk.Frame(self.root)
+        self.canvas_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
         self.draw_grid()
-
-
+    
+    def get_center(self):
+        if self.section:
+            min_x, min_y, max_x, max_y = self.section.get_borders(indent=2)
+    
+            center_world_x = (min_x + max_x) / 2
+            center_world_y = (min_y + max_y) / 2
+        else:
+            center_world_x = 0
+            center_world_y = 0
+        
+        screen_center_x = self.canvas_width // 2
+        screen_center_y = self.canvas_height // 2
+        
+        return center_world_x, center_world_y, screen_center_x, screen_center_y
+    
+    def world_to_screen(self, x, y):
+        world_center_x, world_center_y, screen_center_x, screen_center_y = self.get_center()
+        
+        screen_x = screen_center_x + (x - world_center_x) * self.cell
+        screen_y = screen_center_y - (y - world_center_y) * self.cell
+        
+        return screen_x, screen_y
+    
     def draw_grid(self):
-        main_place = ttk.Frame(self.root)
-        main_place.pack(fill=tk.BOTH, expand=False)
-
-        main_field = ttk.LabelFrame(main_place, padding=5)
-        main_field.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=5, pady=5)
+        for widget in self.canvas_container.winfo_children():
+            widget.destroy()
+        
+        self.canvas = tk.Canvas(self.canvas_container, width=self.canvas_width, 
+                               height=self.canvas_height, bg='white')
+        self.canvas.pack(fill=tk.BOTH, expand=True)
         
         if self.section:
             min_x, min_y, max_x, max_y = self.section.get_borders(indent=3)
         else:
-            min_x, min_y, max_x, max_y = -15, -15, 15, 15
+            min_x, min_y, max_x, max_y = -40, -40, 40, 40
         
-        width_m = (max_x - min_x) * self.cell
-        height_m = (max_y - min_y) * self.cell
-
-        self.canvas = tk.Canvas(main_field, width=width_m, height=height_m, bg='white')
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        for i in range(0, width_m):
-            if i % 30 == 0:
-                self.canvas.create_line(0, i, height_m, i, fill='azure3', tags="axes")
-
-        for i in range(0, height_m):
-            if i % 30 == 0:
-                self.canvas.create_line(i, 0, i, width_m, fill='azure3', tags="axes")
-
-        y_zero = (-min_y) * self.cell
-        x_zero = (-min_x) * self.cell
-
-        if 0 <= x_zero <= height_m:
-            self.canvas.create_line(x_zero, 0, x_zero, width_m, fill='black', tags="axes")
-        if 0 <= y_zero <= width_m:
-            self.canvas.create_line(0, y_zero, height_m, y_zero, fill='black', tags="axes")
-
-        #подпись осей координат
-        for x in range(min_x, max_x + 1):
+        world_center_x, world_center_y, screen_center_x, screen_center_y = self.get_center()
+        
+        for x in range(-self.canvas_height, self.canvas_height):
+            screen_x, _ = self.world_to_screen(x, 0)
+            if 0 <= screen_x <= self.canvas_width:
+                if x == 0:
+                    color = 'black'
+                else:
+                    color = 'lightgray'
+                self.canvas.create_line(screen_x, 0, screen_x, self.canvas_height, fill=color)
+        
+        for y in range(-self.canvas_width, self.canvas_width):
+            _, screen_y = self.world_to_screen(0, y)
+            if 0 <= screen_y <= self.canvas_height:
+                if y == 0:
+                    color = 'black'
+                else:
+                    color = 'lightgray'
+                self.canvas.create_line(0, screen_y, self.canvas_width, screen_y, fill=color)
+        
+        for x in range(-self.canvas_height, self.canvas_height):
             if x == 0:
                 continue
-            x_pixel = (x - min_x) * self.cell
-            if 0 <= x_pixel <= width_m:
-                self.canvas.create_text(x_pixel, y_zero + 15, text=str(x), fill='gray', font=('Arial', 9))
-
-        for y in range(min_y, max_y + 1):
+            screen_x, screen_y = self.world_to_screen(x, 0)
+            if 0 <= screen_x <= self.canvas_width:
+                self.canvas.create_text(screen_x, screen_y + 15, text=str(x), 
+                                       fill='gray', font=('Arial', 9))
+        
+        for y in range(-self.canvas_width, self.canvas_width):
             if y == 0:
                 continue
-            y_pixel = (max_y - y) * self.cell
-            if 0 <= y_pixel <= height_m:
-                self.canvas.create_text(x_zero - 15, y_pixel, text=str(y), fill='gray', font=('Arial', 9))
+            screen_x, screen_y = self.world_to_screen(0, y)
+            if 0 <= screen_y <= self.canvas_height:
+                self.canvas.create_text(screen_x - 15, screen_y, text=str(y), 
+                                       fill='gray', font=('Arial', 9))
+        
+        screen_x, screen_y = self.world_to_screen(0, 0)
+        if 0 <= screen_x <= self.canvas_width and 0 <= screen_y <= self.canvas_height:
+            self.canvas.create_text(screen_x + 5, screen_y + 15, text="0",
+                                   fill='gray', font=('Arial', 10, 'bold'))
+        
+        if self.section:
+            x1, y1 = self.world_to_screen(self.section.a.x, self.section.a.y)
+            x2, y2 = self.world_to_screen(self.section.b.x, self.section.b.y)
+            
+            self.canvas.create_line(x1, y1, x2, y2, fill='red', width=3)
+            
+            self.canvas.create_oval(x1-3, y1-3, x1+3, y1+3, fill='black', outline='darkblue')
+            self.canvas.create_oval(x2-3, y2-3, x2+3, y2+3, fill='black', outline='darkblue')
     
-        if 0 <= x_zero <= width_m and 0 <= y_zero <= height_m:
-            self.canvas.create_text(x_zero + 5, y_zero + 15, text="0",
-                                    fill='gray', font=('Arial', 10, 'bold'))
-
     def input_fields(self):
-
-        input_panel = ttk.LabelFrame(self.root,  padding=10)
+        input_panel = ttk.LabelFrame(self.root, padding=10, text="Ввод координат")
         input_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
 
-        ttk.Label(input_panel, text="т. A:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(1))
+        # Точка A
+        ttk.Label(input_panel, text="Точка A:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(5,0))
 
         frame_a = ttk.Frame(input_panel)
-        frame_a.pack(fill=tk.X, pady=(0,10))
+        frame_a.pack(fill=tk.X, pady=5)
 
-        ttk.Label(frame_a, text="X:").pack(side=tk.LEFT, padx=(0,5))
+        ttk.Label(frame_a, text="X:").pack(side=tk.LEFT, padx=5)
         self.ax_entry = ttk.Entry(frame_a, width=10)
-        self.ax_entry.pack(side=tk.LEFT, padx=(0,10))
+        self.ax_entry.pack(side=tk.LEFT, padx=5)
+        self.ax_entry.insert(0, "0")
 
+        ttk.Label(frame_a, text="Y:").pack(side=tk.LEFT, padx=5)
+        self.ay_entry = ttk.Entry(frame_a, width=10)
+        self.ay_entry.pack(side=tk.LEFT, padx=5)
+        self.ay_entry.insert(0, "0")
+
+        # Точка B
+        ttk.Label(input_panel, text="Точка B:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(10,0))
+
+        frame_b = ttk.Frame(input_panel)
+        frame_b.pack(fill=tk.X, pady=5)
+
+        ttk.Label(frame_b, text="X:").pack(side=tk.LEFT, padx=5)
+        self.bx_entry = ttk.Entry(frame_b, width=10)
+        self.bx_entry.pack(side=tk.LEFT, padx=5)
+        self.bx_entry.insert(0, "5")
+
+        ttk.Label(frame_b, text="Y:").pack(side=tk.LEFT, padx=5)
+        self.by_entry = ttk.Entry(frame_b, width=10)
+        self.by_entry.pack(side=tk.LEFT, padx=5)
+        self.by_entry.insert(0, "5")
+
+        ttk.Button(input_panel, text="Нарисовать отрезок", command=self.draw_section).pack(pady=15)
+
+    def draw_section(self):
+        try:
+            x1 = int(self.ax_entry.get())
+            y1 = int(self.ay_entry.get())
+            x2 = int(self.bx_entry.get())
+            y2 = int(self.by_entry.get())
+            
+            point_a = Point(x1, y1)
+            point_b = Point(x2, y2)
+            self.section = Section(point_a, point_b)
+            
+            self.draw_grid()
+            
+        except ValueError:
+            print("Ошибка: Введите целые числа!")
 
 if __name__ == "__main__":
     window = tk.Tk()
     app = Rasterization_section(window)
-    window.mainloop()       
+    window.mainloop()
