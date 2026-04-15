@@ -25,19 +25,6 @@ class Section:
 
         return min_x, min_y, max_x, max_y
 
-class Circle:
-    def __init__(self, center: Point, radius: int):
-        self.center = center
-        self.radius = radius
-
-    def get_borders(self, indent: int = 3):
-        min_x = self.center.x - self.radius - indent
-        min_y = self.center.y - self.radius - indent
-        max_x = self.center.x + self.radius + indent
-        max_y = self.center.y + self.radius + indent
-        return min_x, min_y, max_x, max_y
-        
-
 
 class Rasterization_section:
     def __init__(self, root):
@@ -148,9 +135,7 @@ class Rasterization_section:
         input_panel = ttk.LabelFrame(self.root, padding=10, text="Ввод координат")
         input_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
 
-        ttk.Label(input_panel, text="Отрезок", font=('Arial', 10, 'bold underline')).pack(anchor=tk.W, pady=(10,0))
-
-        #A
+        # Точка A
         ttk.Label(input_panel, text="Точка A:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(5,0))
 
         frame_a = ttk.Frame(input_panel)
@@ -166,7 +151,7 @@ class Rasterization_section:
         self.ay_entry.pack(side=tk.LEFT, padx=5)
         self.ay_entry.insert(0, "0")
 
-        #B
+        # Точка B
         ttk.Label(input_panel, text="Точка B:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(10,0))
 
         frame_b = ttk.Frame(input_panel)
@@ -182,55 +167,23 @@ class Rasterization_section:
         self.by_entry.pack(side=tk.LEFT, padx=5)
         self.by_entry.insert(0, "5")
 
-        ttk.Label(input_panel, text="Круг", font=('Arial', 10, 'bold underline')).pack(anchor=tk.W, pady=(10,0))
-
-        frame_r = ttk.Frame(input_panel)
-        frame_r.pack(fill=tk.X, pady=5)
-
-        ttk.Label(frame_r, text="Радиус r:").pack(side=tk.LEFT, padx=5)
-        self.bx_entry = ttk.Entry(frame_r, width=10)
-        self.bx_entry.pack(side=tk.LEFT, padx=5)
-        self.bx_entry.insert(0, "5")
-
-
-        ttk.Label(input_panel, text="Центр окружности", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(10,0))
-
-        frame_center = ttk.Frame(input_panel)
-        frame_center.pack(fill=tk.X, pady=5)
-
-        ttk.Label(frame_center, text="X:").pack(side=tk.LEFT, padx=5)
-        self.ax_entry = ttk.Entry(frame_center, width=10)
-        self.ax_entry.pack(side=tk.LEFT, padx=5)
-        self.ax_entry.insert(0, "0")
-
-        ttk.Label(frame_center, text="Y:").pack(side=tk.LEFT, padx=5)
-        self.ay_entry = ttk.Entry(frame_center, width=10)
-        self.ay_entry.pack(side=tk.LEFT, padx=5)
-        self.ay_entry.insert(0, "0")
-
-        ttk.Button(input_panel, text="Нарисовать отрезок", command=self.draw_section).pack(anchor='w', pady=3)
-        ttk.Button(input_panel, text="Нарисовать круг", command=self.draw_circle).pack(anchor='w', pady=3)
-        ttk.Button(input_panel, text="Очистить", command=self.clear_all).pack(anchor='w', pady=3)
+        ttk.Button(input_panel, text="Нарисовать отрезок", command=self.draw_section).pack(pady=15)
 
     def draw_section(self):
-        x1 = int(self.ax_entry.get())
-        y1 = int(self.ay_entry.get())
-        x2 = int(self.bx_entry.get())
-        y2 = int(self.by_entry.get())
+        try:
+            x1 = int(self.ax_entry.get())
+            y1 = int(self.ay_entry.get())
+            x2 = int(self.bx_entry.get())
+            y2 = int(self.by_entry.get())
             
-        point_a = Point(x1, y1)
-        point_b = Point(x2, y2)
-        self.section = Section(point_a, point_b)
+            point_a = Point(x1, y1)
+            point_b = Point(x2, y2)
+            self.section = Section(point_a, point_b)
             
-        self.draw_grid()
-
-    def clear_all(self):
-        self.section = None
-        self.draw_grid()
-
-    def draw_circle(self):
-
-
+            self.draw_grid()
+            
+        except ValueError:
+            print("Ошибка: Введите целые числа!")
 
 if __name__ == "__main__":
     window = tk.Tk()
