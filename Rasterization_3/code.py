@@ -47,6 +47,7 @@ class Rasterization_section:
         
         self.cell = 30
         self.section = None
+        self.circle = None
         
         self.canvas_width = 700
         self.canvas_height = 700
@@ -61,7 +62,10 @@ class Rasterization_section:
     def get_center(self):
         if self.section:
             min_x, min_y, max_x, max_y = self.section.get_borders(indent=2)
-    
+            center_world_x = (min_x + max_x) / 2
+            center_world_y = (min_y + max_y) / 2
+        elif self.circle:
+            min_x, min_y, max_x, max_y = self.circle.get_borders(indent=2)
             center_world_x = (min_x + max_x) / 2
             center_world_y = (min_y + max_y) / 2
         else:
@@ -89,7 +93,9 @@ class Rasterization_section:
                                height=self.canvas_height, bg='white')
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
-        if self.section:
+        if self.circle:
+            min_x, min_y, max_x, max_y = self.circle.get_borders(indent=3)
+        elif self.section:
             min_x, min_y, max_x, max_y = self.section.get_borders(indent=3)
         else:
             min_x, min_y, max_x, max_y = -40, -40, 40, 40
@@ -135,14 +141,6 @@ class Rasterization_section:
             self.canvas.create_text(screen_x + 5, screen_y + 15, text="0",
                                    fill='gray', font=('Arial', 10, 'bold'))
         
-        if self.section:
-            x1, y1 = self.world_to_screen(self.section.a.x, self.section.a.y)
-            x2, y2 = self.world_to_screen(self.section.b.x, self.section.b.y)
-            
-            self.canvas.create_line(x1, y1, x2, y2, fill='red', width=3)
-            
-            self.canvas.create_oval(x1-3, y1-3, x1+3, y1+3, fill='black', outline='darkblue')
-            self.canvas.create_oval(x2-3, y2-3, x2+3, y2+3, fill='black', outline='darkblue')
     
     def input_fields(self):
         input_panel = ttk.LabelFrame(self.root, padding=10, text="Ввод координат")
@@ -188,9 +186,9 @@ class Rasterization_section:
         frame_r.pack(fill=tk.X, pady=5)
 
         ttk.Label(frame_r, text="Радиус r:").pack(side=tk.LEFT, padx=5)
-        self.bx_entry = ttk.Entry(frame_r, width=10)
-        self.bx_entry.pack(side=tk.LEFT, padx=5)
-        self.bx_entry.insert(0, "5")
+        self.radius_entry = ttk.Entry(frame_r, width=10)
+        self.radius_entry.pack(side=tk.LEFT, padx=5)
+        self.radius_entry.insert(0, "5")
 
 
         ttk.Label(input_panel, text="Центр окружности", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(10,0))
@@ -199,20 +197,21 @@ class Rasterization_section:
         frame_center.pack(fill=tk.X, pady=5)
 
         ttk.Label(frame_center, text="X:").pack(side=tk.LEFT, padx=5)
-        self.ax_entry = ttk.Entry(frame_center, width=10)
-        self.ax_entry.pack(side=tk.LEFT, padx=5)
-        self.ax_entry.insert(0, "0")
+        self.cx_entry = ttk.Entry(frame_center, width=10)
+        self.cx_entry.pack(side=tk.LEFT, padx=5)
+        self.cx_entry.insert(0, "0")
 
         ttk.Label(frame_center, text="Y:").pack(side=tk.LEFT, padx=5)
-        self.ay_entry = ttk.Entry(frame_center, width=10)
-        self.ay_entry.pack(side=tk.LEFT, padx=5)
-        self.ay_entry.insert(0, "0")
+        self.cy_entry = ttk.Entry(frame_center, width=10)
+        self.cy_entry.pack(side=tk.LEFT, padx=5)
+        self.cy_entry.insert(0, "0")
 
         ttk.Button(input_panel, text="Нарисовать отрезок", command=self.draw_section).pack(anchor='w', pady=3)
         ttk.Button(input_panel, text="Нарисовать круг", command=self.draw_circle).pack(anchor='w', pady=3)
         ttk.Button(input_panel, text="Очистить", command=self.clear_all).pack(anchor='w', pady=3)
 
     def draw_section(self):
+        self.circle = None
         x1 = int(self.ax_entry.get())
         y1 = int(self.ay_entry.get())
         x2 = int(self.bx_entry.get())
@@ -221,15 +220,38 @@ class Rasterization_section:
         point_a = Point(x1, y1)
         point_b = Point(x2, y2)
         self.section = Section(point_a, point_b)
-            
+
+
         self.draw_grid()
+
+        x1, y1 = self.world_to_screen(self.section.a.x, self.section.a.y)
+        x2, y2 = self.world_to_screen(self.section.b.x, self.section.b.y)
+            
+        self.canvas.create_line(x1, y1, x2, y2, fill='red', width=3)
+            
+        self.canvas.create_oval(x1-3, y1-3, x1+3, y1+3, fill='black', outline='darkblue')
+        self.canvas.create_oval(x2-3, y2-3, x2+3, y2+3, fill='black', outline='darkblue')
+        
 
     def clear_all(self):
         self.section = None
+        self.circle = None
         self.draw_grid()
 
     def draw_circle(self):
+        self.section = None
+        cx = int(self.cx_entry.get())
+        cy = int(self.cy_entry.get())
+        r = int(self.radius_entry.get())
+            
+        self.circle = Circle(Point(cx, cy), r)
 
+        self.draw_grid()
+
+        cx, cy = self.world_to_screen(self.circle.center.x, self.circle.center.y)
+        r_pixels = r * self.cell
+
+        self.canvas.create_oval(cx-r_pixels, cy+r_pixels, cx+r_pixels, cy-r_pixels, outline='red', width=3)
 
 
 if __name__ == "__main__":
