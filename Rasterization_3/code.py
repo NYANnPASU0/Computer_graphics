@@ -232,6 +232,10 @@ class Rasterization_section:
         self.canvas.create_oval(x1-3, y1-3, x1+3, y1+3, fill='black', outline='darkblue')
         self.canvas.create_oval(x2-3, y2-3, x2+3, y2+3, fill='black', outline='darkblue')
         
+        self.rasterization_section()
+
+    def rasterization_section(self):
+        
 
     def clear_all(self):
         self.section = None
