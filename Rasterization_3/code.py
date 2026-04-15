@@ -157,12 +157,12 @@ class Rasterization_section:
         ttk.Label(frame_a, text="X:").pack(side=tk.LEFT, padx=5)
         self.ax_entry = ttk.Entry(frame_a, width=10)
         self.ax_entry.pack(side=tk.LEFT, padx=5)
-        self.ax_entry.insert(0, "0")
+        self.ax_entry.insert(0, "-3")
 
         ttk.Label(frame_a, text="Y:").pack(side=tk.LEFT, padx=5)
         self.ay_entry = ttk.Entry(frame_a, width=10)
         self.ay_entry.pack(side=tk.LEFT, padx=5)
-        self.ay_entry.insert(0, "0")
+        self.ay_entry.insert(0, "-1")
 
         #B
         ttk.Label(input_panel, text="Точка B:", font=('Arial', 9, 'bold')).pack(anchor=tk.W, pady=(10,0))
@@ -227,15 +227,56 @@ class Rasterization_section:
         x1, y1 = self.world_to_screen(self.section.a.x, self.section.a.y)
         x2, y2 = self.world_to_screen(self.section.b.x, self.section.b.y)
             
-        self.canvas.create_line(x1, y1, x2, y2, fill='red', width=3)
+        self.canvas.create_line(x1, y1, x2, y2, fill='blue', width=2)
             
-        self.canvas.create_oval(x1-3, y1-3, x1+3, y1+3, fill='black', outline='darkblue')
-        self.canvas.create_oval(x2-3, y2-3, x2+3, y2+3, fill='black', outline='darkblue')
+        self.canvas.create_oval(x1-3, y1-3, x1+3, y1+3, fill='black', outline='black')
+        self.canvas.create_oval(x2-3, y2-3, x2+3, y2+3, fill='black', outline='black')
         
         self.rasterization_section()
 
-    def rasterization_section(self):
+    def algorithm_brezenhem(self, x0, y0, x1, y1):
+        pixels = []
         
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+        
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        
+        err = dx - dy
+        
+        x, y = x0, y0
+        
+        while True:
+            pixels.append((x, y))
+            
+            if x == x1 and y == y1:
+                break
+                
+            e2 = 2 * err
+            
+            if e2 > -dy:
+                err -= dy
+                x += sx
+                
+            if e2 < dx:
+                err += dx
+                y += sy
+                
+        return pixels
+
+    def rasterization_section(self):
+        if not self.section:
+            return
+            
+        pixels = self.algorithm_brezenhem(self.section.a.x, self.section.a.y, self.section.b.x, self.section.b.y)
+        
+        for x, y in pixels:
+            screen_x, screen_y = self.world_to_screen(x, y)
+
+            point_size = 2
+            self.canvas.create_oval(screen_x - point_size, screen_y - point_size,
+                screen_x + point_size, screen_y + point_size, fill ='black', width=2)
 
     def clear_all(self):
         self.section = None
@@ -256,6 +297,46 @@ class Rasterization_section:
         r_pixels = r * self.cell
 
         self.canvas.create_oval(cx-r_pixels, cy+r_pixels, cx+r_pixels, cy-r_pixels, outline='red', width=3)
+
+        self.rasterization_circle()
+
+    def algorithm_brezenhem_circle(self, x0, y0, radius):
+        pixels = []
+        
+        x = radius
+        y = 0
+        err = 1 - x
+        
+        while x >= y:
+            pixels.append((x + x0, y + y0))
+            pixels.append((y + x0, x + y0))
+            pixels.append((-x + x0, y + y0))
+            pixels.append((-y + x0, x + y0))
+            pixels.append((-x + x0, -y + y0))
+            pixels.append((-y + x0, -x + y0))
+            pixels.append((x + x0, -y + y0))
+            pixels.append((y + x0, -x + y0))
+            
+            y += 1
+            if err < 0:
+                err += 2 * y + 1
+            else:
+                x -= 1
+                err += 2 * (y - x + 1)
+                
+        return pixels
+
+    def rasterization_circle(self):
+        pixels = self.algorithm_brezenhem_circle(self.circle.center.x, self.circle.center.y, self.circle.radius)
+        
+        for x, y in pixels:
+            screen_x, screen_y = self.world_to_screen(x, y)
+            
+            point_size = 2
+            self.canvas.create_oval(screen_x - point_size, screen_y - point_size, screen_x + point_size, 
+                screen_y + point_size, fill='black', width=2)
+
+
 
 
 if __name__ == "__main__":
