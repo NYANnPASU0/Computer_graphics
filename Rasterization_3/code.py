@@ -273,7 +273,7 @@ class Rasterization_section:
             screen_x, screen_y = self.coords_to_screen(x, y)
 
             point_size = 2
-            
+
             self.canvas.create_oval(screen_x - point_size, screen_y - point_size,
                 screen_x + point_size, screen_y + point_size, fill ='black', width=2)
 
@@ -302,11 +302,11 @@ class Rasterization_section:
     def algorithm_brezenhem_circle(self, x0, y0, radius):
         pixels = []
         
-        x = radius
-        y = 0
-        err = 1 - x
+        x = 0
+        y = radius
+        err = 1 - radius
         
-        while x >= y:
+        while x <= y:
             pixels.append((x + x0, y + y0))
             pixels.append((y + x0, x + y0))
             pixels.append((-x + x0, y + y0))
@@ -316,12 +316,13 @@ class Rasterization_section:
             pixels.append((x + x0, -y + y0))
             pixels.append((y + x0, -x + y0))
             
-            y += 1
             if err < 0:
-                err += 2 * y + 1
+                err += 2 * x + 3
             else:
-                x -= 1
-                err += 2 * (y - x + 1)
+                err += 2 * (x - y) + 5
+                y -= 1
+
+            x += 1
                 
         return pixels
 
