@@ -55,33 +55,33 @@ class Rasterization_section:
         self.input_fields()
         
         self.canvas_container = ttk.Frame(self.root)
-        self.canvas_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.canvas_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=5, pady=5)
         
         self.draw_grid()
     
     def get_center(self):
         if self.section:
-            min_x, min_y, max_x, max_y = self.section.get_borders(indent=2)
-            center_world_x = (min_x + max_x) / 2
-            center_world_y = (min_y + max_y) / 2
+            min_x, min_y, max_x, max_y = self.section.get_borders(indent=3)
+            center_w_x = (min_x + max_x) / 2
+            center_w_y = (min_y + max_y) / 2
         elif self.circle:
-            min_x, min_y, max_x, max_y = self.circle.get_borders(indent=2)
-            center_world_x = (min_x + max_x) / 2
-            center_world_y = (min_y + max_y) / 2
+            min_x, min_y, max_x, max_y = self.circle.get_borders(indent=3)
+            center_w_x = (min_x + max_x) / 2
+            center_w_y = (min_y + max_y) / 2
         else:
-            center_world_x = 0
-            center_world_y = 0
+            center_w_x = 0
+            center_w_y = 0
         
         screen_center_x = self.canvas_width // 2
         screen_center_y = self.canvas_height // 2
         
-        return center_world_x, center_world_y, screen_center_x, screen_center_y
+        return center_w_x, center_w_y, screen_center_x, screen_center_y
     
-    def world_to_screen(self, x, y):
-        world_center_x, world_center_y, screen_center_x, screen_center_y = self.get_center()
+    def coords_to_screen(self, x, y):
+        w_center_x, w_center_y, screen_center_x, screen_center_y = self.get_center()
         
-        screen_x = screen_center_x + (x - world_center_x) * self.cell
-        screen_y = screen_center_y - (y - world_center_y) * self.cell
+        screen_x = screen_center_x + (x - w_center_x) * self.cell
+        screen_y = screen_center_y - (y - w_center_y) * self.cell
         
         return screen_x, screen_y
     
@@ -91,7 +91,7 @@ class Rasterization_section:
         
         self.canvas = tk.Canvas(self.canvas_container, width=self.canvas_width, 
                                height=self.canvas_height, bg='white')
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.pack(fill=tk.BOTH, expand=False)
         
         if self.circle:
             min_x, min_y, max_x, max_y = self.circle.get_borders(indent=3)
@@ -100,10 +100,8 @@ class Rasterization_section:
         else:
             min_x, min_y, max_x, max_y = -40, -40, 40, 40
         
-        world_center_x, world_center_y, screen_center_x, screen_center_y = self.get_center()
-        
         for x in range(-self.canvas_height, self.canvas_height):
-            screen_x, _ = self.world_to_screen(x, 0)
+            screen_x, c = self.coords_to_screen(x, 0)
             if 0 <= screen_x <= self.canvas_width:
                 if x == 0:
                     color = 'black'
@@ -112,7 +110,7 @@ class Rasterization_section:
                 self.canvas.create_line(screen_x, 0, screen_x, self.canvas_height, fill=color)
         
         for y in range(-self.canvas_width, self.canvas_width):
-            _, screen_y = self.world_to_screen(0, y)
+            c, screen_y = self.coords_to_screen(0, y)
             if 0 <= screen_y <= self.canvas_height:
                 if y == 0:
                     color = 'black'
@@ -123,7 +121,7 @@ class Rasterization_section:
         for x in range(-self.canvas_height, self.canvas_height):
             if x == 0:
                 continue
-            screen_x, screen_y = self.world_to_screen(x, 0)
+            screen_x, screen_y = self.coords_to_screen(x, 0)
             if 0 <= screen_x <= self.canvas_width:
                 self.canvas.create_text(screen_x, screen_y + 15, text=str(x), 
                                        fill='gray', font=('Arial', 9))
@@ -131,12 +129,12 @@ class Rasterization_section:
         for y in range(-self.canvas_width, self.canvas_width):
             if y == 0:
                 continue
-            screen_x, screen_y = self.world_to_screen(0, y)
+            screen_x, screen_y = self.coords_to_screen(0, y)
             if 0 <= screen_y <= self.canvas_height:
                 self.canvas.create_text(screen_x - 15, screen_y, text=str(y), 
                                        fill='gray', font=('Arial', 9))
         
-        screen_x, screen_y = self.world_to_screen(0, 0)
+        screen_x, screen_y = self.coords_to_screen(0, 0)
         if 0 <= screen_x <= self.canvas_width and 0 <= screen_y <= self.canvas_height:
             self.canvas.create_text(screen_x + 5, screen_y + 15, text="0",
                                    fill='gray', font=('Arial', 10, 'bold'))
@@ -224,8 +222,8 @@ class Rasterization_section:
 
         self.draw_grid()
 
-        x1, y1 = self.world_to_screen(self.section.a.x, self.section.a.y)
-        x2, y2 = self.world_to_screen(self.section.b.x, self.section.b.y)
+        x1, y1 = self.coords_to_screen(self.section.a.x, self.section.a.y)
+        x2, y2 = self.coords_to_screen(self.section.b.x, self.section.b.y)
             
         self.canvas.create_line(x1, y1, x2, y2, fill='blue', width=2)
             
@@ -272,9 +270,10 @@ class Rasterization_section:
         pixels = self.algorithm_brezenhem(self.section.a.x, self.section.a.y, self.section.b.x, self.section.b.y)
         
         for x, y in pixels:
-            screen_x, screen_y = self.world_to_screen(x, y)
+            screen_x, screen_y = self.coords_to_screen(x, y)
 
             point_size = 2
+            
             self.canvas.create_oval(screen_x - point_size, screen_y - point_size,
                 screen_x + point_size, screen_y + point_size, fill ='black', width=2)
 
@@ -293,7 +292,7 @@ class Rasterization_section:
 
         self.draw_grid()
 
-        cx, cy = self.world_to_screen(self.circle.center.x, self.circle.center.y)
+        cx, cy = self.coords_to_screen(self.circle.center.x, self.circle.center.y)
         r_pixels = r * self.cell
 
         self.canvas.create_oval(cx-r_pixels, cy+r_pixels, cx+r_pixels, cy-r_pixels, outline='red', width=3)
@@ -330,13 +329,11 @@ class Rasterization_section:
         pixels = self.algorithm_brezenhem_circle(self.circle.center.x, self.circle.center.y, self.circle.radius)
         
         for x, y in pixels:
-            screen_x, screen_y = self.world_to_screen(x, y)
+            screen_x, screen_y = self.coords_to_screen(x, y)
             
             point_size = 2
             self.canvas.create_oval(screen_x - point_size, screen_y - point_size, screen_x + point_size, 
                 screen_y + point_size, fill='black', width=2)
-
-
 
 
 if __name__ == "__main__":
