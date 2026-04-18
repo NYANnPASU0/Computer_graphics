@@ -36,6 +36,8 @@ class Window:
         self.canvas_height = 900
 
         self.select_file = None
+        self.rectangle = None
+        self.lines = []  # список отрезков
 
         self.info_frame = ttk.Frame(self.root)
         self.info_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -65,15 +67,31 @@ class Window:
         menubar.add_cascade(label="Файл", menu=file_menu)
         menubar.add_cascade(label="Выход", command=self.root.quit) #выход
         
+    
+    def set_rectangle(self, x_min, y_min, x_max, y_max):
+        A = Point(x_min, y_min)
+        B = Point(x_max, y_min)
+        C = Point(x_max, y_max)
+        D = Point(x_min, y_max)
+        self.rectangle = Rectangle(A, B, C, D)
+    
+    def get_center(self):
+        center_w_x = (self.rectangle.x_min + self.rectangle.x_max) / 2
+        center_w_y = (self.rectangle.y_min + self.rectangle.y_max) / 2
+
+        screen_center_x = self.canvas_width / 2
+        screen_center_y = self.canvas_height / 2
+        
+        return center_w_x, center_w_y, screen_center_x, screen_center_y
 
 
-    '''def coords_to_screen(self, x, y):
+    def coords_to_screen(self, x, y):
         w_center_x, w_center_y, screen_center_x, screen_center_y = self.get_center()
         
         screen_x = screen_center_x + (x - w_center_x) * self.cell
         screen_y = screen_center_y - (y - w_center_y) * self.cell
         
-        return screen_x, screen_y '''
+        return screen_x, screen_y
     
     def draw_grid(self):
         for widget in self.canvas_container.winfo_children():
@@ -83,7 +101,7 @@ class Window:
                                height=self.canvas_height, bg='white')
         self.canvas.pack(fill=tk.BOTH, expand=False)
 
-        ''' for x in range(-self.canvas_height, self.canvas_height):
+        for x in range(-self.canvas_height, self.canvas_height):
             screen_x, c = self.coords_to_screen(x, 0)
             if 0 <= screen_x <= self.canvas_width:
                 if x == 0:
@@ -99,9 +117,8 @@ class Window:
                     color = 'black'
                 else:
                     color = 'lightgray'
-                self.canvas.create_line(0, screen_y, self.canvas_width, screen_y, fill=color) '''
+                self.canvas.create_line(0, screen_y, self.canvas_width, screen_y, fill=color)
         
-    
 
 if __name__ == "__main__":
     window = tk.Tk()
