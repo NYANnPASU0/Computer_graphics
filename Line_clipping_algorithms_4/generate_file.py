@@ -1,32 +1,67 @@
 import os
+import subprocess
+import platform
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import messagebox, filedialog, simpledialog
 
-def show_available_files(parent=None):
-    dialog = tk.Toplevel(parent) if parent else tk.Tk()
-    dialog.title("Выбор входных данных")
-    dialog.geometry("550x450")
-    dialog.resizable(False, False)
+def open_file_explorer(subfolder):
+    project_path = os.path.join(os.getcwd(), subfolder)
+    subprocess.Popen(f'explorer "{project_path}"')
+
+def generate_new_file(parent, subfolder):
+    save_folder = os.path.join(os.getcwd(), subfolder)
+    os.makedirs(save_folder, exist_ok=True)
+
+    filename = simpledialog.askstring("Создать новый файл", "Введите имя файла:", parent=parent)
+
+    if not filename.endswith('.txt'): filename += '.txt'
     
-    if parent:
-        dialog.grab_set()  # Делаем окно модальным
-        dialog.transient(parent)
+    filepath = os.path.join(save_folder, filename)
+    
+    if os.path.exists(filepath):
+        overwrite = messagebox.askyesno(
+            "Файл существует",
+            f"Файл {filename} уже существует.\nПерезаписать его?",
+            parent=parent
+        )
+        if not overwrite:
+            return None
+    
+    # Текст по умолчанию для нового файла
+    default_text = \
+    """
+    Координаты вершин многоугольника :
+точка A
+X:
+Y:
 
-def choose_or_generate_file():
-    num = 1
-    while True:
-        if not os.path.exists(f"Входные_координаты_{num}.txt"):
-            break
-        num += 1
+точка B
+X:
+Y:
 
-    selector = tk.Toplevel()
-    selector.title("Выбор входных данных")
-    selector.geometry("500x400")
+точка C
+X:
+Y:
 
-     # Список файлов
-    listbox = tk.Listbox(selector, height=15, font=("Courier", 10))
-    listbox.pack(fill='both', expand=True, padx=20, pady=10)
+точка D
+X:
+Y:
 
 
-if __name__ == "__main__":
-    choose_or_generate_file()
+    Координаты концов отрезка
+точка V
+X:
+Y:
+
+точка U:
+X:
+Y:
+"""
+
+    
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(default_text)
+        
+    return filepath
+    

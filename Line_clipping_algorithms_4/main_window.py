@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
+import os
 import math
-from generate_file import choose_or_generate_file, show_available_files
+from generate_file import open_file_explorer,  generate_new_file
 
 class Window:
     def __init__(self, root):
@@ -38,11 +39,11 @@ class Window:
 
         #подзаголовок - файл
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Создать новый файл", command = lambda: self.root.quit)
-        file_menu.add_command(label="Выбрать существущий файл   >", command = lambda: show_available_files(self.root))
+        file_menu.add_command(label="Создать новый файл", command = lambda: generate_new_file(self.root, os.path.join("Line_clipping_algorithms_4", "files")))
+        file_menu.add_command(label="Выбрать существущий файл   >", command = lambda: open_file_explorer(os.path.join("Line_clipping_algorithms_4", "files")))
         menubar.add_cascade(label="Файл", menu=file_menu)
-
         menubar.add_cascade(label="Выход", command=self.root.quit) #выход
+        
 
 
     '''def coords_to_screen(self, x, y):
