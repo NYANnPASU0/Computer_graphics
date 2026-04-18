@@ -4,6 +4,27 @@ import os
 import math
 from generate_file import open_file_explorer,  generate_new_file
 
+
+class Point:
+    def __init__(self, x: int, y: int):
+        self.x = x
+        self.y = y
+
+class Rectangle:
+    def __init__(self, A: Point, B: Point, C: Point, D: Point):
+        self.A = A 
+        self.B = B
+        self.C = C
+        self.D = D 
+
+        all_x = [A.x, B.x, C.x, D.x]
+        all_y = [A.y, B.y, C.y, D.y]
+        
+        self.x_min = min(all_x)
+        self.x_max = max(all_x)
+        self.y_min = min(all_y)
+        self.y_max = max(all_y)
+
 class Window:
     def __init__(self, root):
         self.root = root
