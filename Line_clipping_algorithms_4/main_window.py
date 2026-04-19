@@ -56,11 +56,29 @@ class Window:
         button_frame = ttk.Frame(self.info_frame)
         button_frame.pack(pady=20, padx=10)
 
+
     def draw_rectangle(self):
         if self.rectangle:
-            x1, y1 = self.coords_to_screen(self.rectangle.x_min, self.rectangle.y_min)
-            x2, y2 = self.coords_to_screen(self.rectangle.x_max, self.rectangle.y_max)
-            self.canvas.create_rectangle(x1, y1, x2, y2, outline='blue', width=3, fill='', tags='rectangle')
+            x1, y1 = self.coords_to_screen(self.rectangle.A.x, self.rectangle.A.y)
+            x2, y2 = self.coords_to_screen(self.rectangle.B.x, self.rectangle.B.y)
+            x3, y3 = self.coords_to_screen(self.rectangle.C.x, self.rectangle.C.y)
+            x4, y4 = self.coords_to_screen(self.rectangle.D.x, self.rectangle.D.y)
+            
+            # A->B->C->D->A
+            self.canvas.create_line(x1, y1, x2, y2, fill='blue', width=2.3, tags='rectangle')
+            self.canvas.create_line(x2, y2, x3, y3, fill='blue', width=2.3, tags='rectangle')
+            self.canvas.create_line(x3, y3, x4, y4, fill='blue', width=2.3, tags='rectangle')
+            self.canvas.create_line(x4, y4, x1, y1, fill='blue', width=2.3, tags='rectangle')
+
+
+    def draw_lines(self):
+        if self.lines:
+            for line in self.lines:
+                start_point, end_point = line
+                x1, y1 = self.coords_to_screen(start_point.x, start_point.y)
+                x2, y2 = self.coords_to_screen(end_point.x, end_point.y)
+                self.canvas.create_line(x1, y1, x2, y2, fill='green', width=2.3, tags='line')
+
 
     def load_file(self):
             from generate_file import select_existing_file 
@@ -71,7 +89,7 @@ class Window:
                     self.select_file = filepath
                     self.draw_grid()
                     self.draw_rectangle()
-                    #self.draw_lines()
+                    self.draw_lines()
 
 
     def create_menu(self):
@@ -106,7 +124,8 @@ class Window:
         screen_y = screen_center_y - (y - w_center_y) * self.cell
         
         return screen_x, screen_y
-    
+
+
     def draw_grid(self):
         for widget in self.canvas_container.winfo_children():
             widget.destroy()
@@ -153,6 +172,7 @@ class Window:
         if 0 <= screen_x <= self.canvas_width and 0 <= screen_y <= self.canvas_height:
             self.canvas.create_text(screen_x + 5, screen_y + 15, text="0",
                                    fill='gray', font=('Arial', 10, 'bold'))
+
 
     def read_data_from_file(self, filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
