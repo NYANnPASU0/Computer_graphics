@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 import os
 import math
-from generate_file import open_file_explorer,  generate_new_file
+from generate_file import generate_new_file
+from tkinter import messagebox, filedialog, simpledialog
 
 
 class Point:
@@ -31,9 +32,9 @@ class Window:
         self.root.title("Алгоритмы отсечения отрезка")
         self.root.geometry("950x700")
 
-        self.cell = 30
+        self.cell = 35
         self.canvas_width = 700
-        self.canvas_height = 900
+        self.canvas_height = 700
 
         self.select_file = None
         self.rectangle = None
@@ -55,6 +56,23 @@ class Window:
         button_frame = ttk.Frame(self.info_frame)
         button_frame.pack(pady=20, padx=10)
 
+    def draw_rectangle(self):
+        if self.rectangle:
+            x1, y1 = self.coords_to_screen(self.rectangle.x_min, self.rectangle.y_min)
+            x2, y2 = self.coords_to_screen(self.rectangle.x_max, self.rectangle.y_max)
+            self.canvas.create_rectangle(x1, y1, x2, y2, outline='blue', width=3, fill='', tags='rectangle')
+
+    def load_file(self):
+            from generate_file import select_existing_file 
+            
+            filepath = select_existing_file(self.root)
+            if filepath:
+                if self.read_data_from_file(filepath):
+                    self.select_file = filepath
+                    self.draw_grid()
+                    self.draw_rectangle()
+                    #self.draw_lines()
+
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -63,19 +81,15 @@ class Window:
         #подзаголовок - файл
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Создать новый файл", command = lambda: generate_new_file(self.root, os.path.join("Line_clipping_algorithms_4", "files")))
-        file_menu.add_command(label="Выбрать существущий файл   >", command = lambda: open_file_explorer(os.path.join("Line_clipping_algorithms_4", "files")))
+        file_menu.add_command(label="Выбрать существущий файл   >", command = self.load_file)
         menubar.add_cascade(label="Файл", menu=file_menu)
         menubar.add_cascade(label="Выход", command=self.root.quit) #выход
-        
-    
-    def set_rectangle(self, x_min, y_min, x_max, y_max):
-        A = Point(x_min, y_min)
-        B = Point(x_max, y_min)
-        C = Point(x_max, y_max)
-        D = Point(x_min, y_max)
-        self.rectangle = Rectangle(A, B, C, D)
-    
+
+
     def get_center(self):
+        if self.rectangle is None:
+            return 0, 0, self.canvas_width / 2, self.canvas_height / 2
+
         center_w_x = (self.rectangle.x_min + self.rectangle.x_max) / 2
         center_w_y = (self.rectangle.y_min + self.rectangle.y_max) / 2
 
@@ -118,7 +132,74 @@ class Window:
                 else:
                     color = 'lightgray'
                 self.canvas.create_line(0, screen_y, self.canvas_width, screen_y, fill=color)
+
+        for x in range(-self.canvas_height, self.canvas_height):
+            if x == 0:
+                continue
+            screen_x, screen_y = self.coords_to_screen(x, 0)
+            if 0 <= screen_x <= self.canvas_width:
+                self.canvas.create_text(screen_x, screen_y + 15, text=str(x), 
+                                       fill='gray', font=('Arial', 9))
         
+        for y in range(-self.canvas_width, self.canvas_width):
+            if y == 0:
+                continue
+            screen_x, screen_y = self.coords_to_screen(0, y)
+            if 0 <= screen_y <= self.canvas_height:
+                self.canvas.create_text(screen_x - 15, screen_y, text=str(y), 
+                                       fill='gray', font=('Arial', 9))
+        
+        screen_x, screen_y = self.coords_to_screen(0, 0)
+        if 0 <= screen_x <= self.canvas_width and 0 <= screen_y <= self.canvas_height:
+            self.canvas.create_text(screen_x + 5, screen_y + 15, text="0",
+                                   fill='gray', font=('Arial', 10, 'bold'))
+
+    def read_data_from_file(self, filepath):
+        with open(filepath, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        self.lines = []
+        self.rectangle = None
+        
+        #удаление пустых строк
+        data_lines = []
+        for line in lines:
+            line = line.strip()
+            if line:
+                data_lines.append(line)
+        
+        rect_coords = []
+        for i in range(4):
+            coords = data_lines[i].split()
+            x = int(coords[0])
+            y = int(coords[1])
+            rect_coords.append((x, y))
+        
+        A = Point(rect_coords[0][0], rect_coords[0][1])
+        B = Point(rect_coords[1][0], rect_coords[1][1])
+        C = Point(rect_coords[2][0], rect_coords[2][1])
+        D = Point(rect_coords[3][0], rect_coords[3][1])
+        self.rectangle = Rectangle(A, B, C, D)
+        
+        # читаем отрезки
+        line_index = 4
+        while line_index < len(data_lines):
+            start_coords = data_lines[line_index].split()
+            end_coords = data_lines[line_index + 1].split()
+            
+            x1 = int(start_coords[0])
+            y1 = int(start_coords[1])
+            x2 = int(end_coords[0])
+            y2 = int(end_coords[1])
+            
+            start_point = Point(x1, y1)
+            end_point = Point(x2, y2)
+            self.lines.append((start_point, end_point))
+            
+            line_index += 2
+        
+        return True
+
 
 if __name__ == "__main__":
     window = tk.Tk()
