@@ -226,72 +226,55 @@ class Window:
 
     def read_data_from_file(self, filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
+            content = f.read()
         
         self.lines = []
         self.polygon = None
         
-        #удаление пустых строк
-        data_lines = []
-        for line in lines:
-            line = line.strip()
-            if line:
-                data_lines.append(line)
+        # strip() удаляет пробелы и переносы в начале и конце
+        # split('\n\n') разделяет текст на части там, где есть пустая строка
+        parts = content.strip().split('\n\n')
         
+        # вершины многоугольника
+        # split('\n') разбивает на отдельные строки
+        polygon_lines = parts[0].strip().split('\n')
         polygon_points = []
-        line_index = 0
-
-        points_set = set()
-        while line_index < len(data_lines):
-            coords = data_lines[line_index].split()
-            if len(coords) != 2:
-                break
-
+        
+        for line in polygon_lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            coords = line.split() #разбиваем строку по пробелам
+            
             x = int(coords[0])
             y = int(coords[1])
-            point_key = f"{x},{y}"
-            
-            # Если точка уже есть в многоугольнике и у нас уже есть хотя бы 3 точки,
-            # возможно, это начало отрезков
-            if point_key in points_set and len(polygon_points) >= 3:
-                # Проверяем, что дальше идут отрезки (четное количество строк)
-                remaining_lines = len(data_lines) - line_index
-                if remaining_lines >= 2 and remaining_lines % 2 == 0:
-                    break
-
             polygon_points.append(Point(x, y))
-            points_set.add(point_key)
-            line_index += 1
         
-        if len(polygon_points) < 3:
-            messagebox.showerror("Ошибка", "Многоугольник должен содержать хотя бы 3 вершины")
-            return False
-        
-        # Создаем многоугольник
         self.polygon = Polygon(polygon_points)
-
-
-        # Читаем отрезки (оставшиеся строки)
-        while line_index + 1 < len(data_lines):
-            start_coords = data_lines[line_index].split()
-            end_coords = data_lines[line_index + 1].split()
-            
-            if len(start_coords) != 2 or len(end_coords) != 2:
-                messagebox.showerror("Ошибка", "Неверный формат отрезка")
-                return False
-            
-            x1 = int(start_coords[0])
-            y1 = int(start_coords[1])
-            x2 = int(end_coords[0])
-            y2 = int(end_coords[1])
-            
-            start_point = Point(x1, y1)
-            end_point = Point(x2, y2)
-            self.lines.append((start_point, end_point))
-            
-            line_index += 2
+        
+        # отрезок
+        if len(parts) > 1:
+            lines_part = parts[1].strip()
+            if lines_part:
+                lines_data = lines_part.split('\n')
+                
+                # Читаем отрезки попарно
+                for i in range(0, len(lines_data), 2):
+                    start_coords = lines_data[i].strip().split()
+                    end_coords = lines_data[i + 1].strip().split()
+                    
+                    x1 = int(start_coords[0])
+                    y1 = int(start_coords[1])
+                    x2 = int(end_coords[0])
+                    y2 = int(end_coords[1])
+                        
+                    start_point = Point(x1, y1)
+                    end_point = Point(x2, y2)
+                    self.lines.append((start_point, end_point))
         
         return True
+
 
 if __name__ == "__main__":
     window = tk.Tk()
