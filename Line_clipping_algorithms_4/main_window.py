@@ -11,20 +11,21 @@ class Point:
         self.x = x
         self.y = y
 
-class Rectangle:
-    def __init__(self, A: Point, B: Point, C: Point, D: Point):
-        self.A = A 
-        self.B = B
-        self.C = C
-        self.D = D 
+class Polygon:
+    def __init__(self, points: list):
+        self.points = points
 
-        all_x = [A.x, B.x, C.x, D.x]
-        all_y = [A.y, B.y, C.y, D.y]
-        
+        all_x = [p.x for p in points]
+        all_y = [p.y for p in points]
+
         self.x_min = min(all_x)
         self.x_max = max(all_x)
         self.y_min = min(all_y)
         self.y_max = max(all_y)
+
+        self.edges = []
+        self.normals = []
+
 
 class Window:
     def __init__(self, root):
@@ -37,7 +38,7 @@ class Window:
         self.canvas_height = 700
 
         self.select_file = None
-        self.rectangle = None
+        self.polygon = None
         self.lines = []  # список отрезков
 
         self.info_frame = ttk.Frame(self.root)
@@ -54,22 +55,71 @@ class Window:
 
     def input_fields(self):
         button_frame = ttk.Frame(self.info_frame)
-        button_frame.pack(pady=20, padx=10)
+        button_frame.pack(pady=10, padx=30)
+
+        title_label = ttk.Label(button_frame, text="Алгоритмы", font=('Arial', 11, 'bold'))
+        title_label.pack(pady=10)
+
+        self.cyrus_beck_btn = ttk.Button(
+            button_frame, text="Алгоритм Цируса-Бека", 
+            command=self.cyrus_beck_algorithm, width=35)
+        self.cyrus_beck_btn.pack(pady=8)
+
+        self.cohen_sutherland_btn = ttk.Button(
+            button_frame, text="Алгоритм Сазерленда-Коэна", 
+            command=self.cohen_sutherland_algorithm, width=35)
+        self.cohen_sutherland_btn.pack(pady=5)
+
+        self.midpoint_btn = ttk.Button(
+            button_frame, text="Алгоритм средней точки", 
+            command=self.midpoint_algorithm, width=35)
+        self.midpoint_btn.pack(pady=5)
 
 
-    def draw_rectangle(self):
-        if self.rectangle:
-            x1, y1 = self.coords_to_screen(self.rectangle.A.x, self.rectangle.A.y)
-            x2, y2 = self.coords_to_screen(self.rectangle.B.x, self.rectangle.B.y)
-            x3, y3 = self.coords_to_screen(self.rectangle.C.x, self.rectangle.C.y)
-            x4, y4 = self.coords_to_screen(self.rectangle.D.x, self.rectangle.D.y)
-            
-            # A->B->C->D->A
-            self.canvas.create_line(x1, y1, x2, y2, fill='blue', width=2.3, tags='rectangle')
-            self.canvas.create_line(x2, y2, x3, y3, fill='blue', width=2.3, tags='rectangle')
-            self.canvas.create_line(x3, y3, x4, y4, fill='blue', width=2.3, tags='rectangle')
-            self.canvas.create_line(x4, y4, x1, y1, fill='blue', width=2.3, tags='rectangle')
+    def cyrus_beck_algorithm(self):
+        """Алгоритм Цируса-Бека (заглушка)"""
+        if not self.rectangle or not self.lines:
+            messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
+            return
+        
+        messagebox.showinfo("Алгоритм Цируса-Бека", "Реализация алгоритма Цируса-Бека будет здесь")
+        self.info_label.config(text="Выбран алгоритм: Цируса-Бека")
 
+
+    def cohen_sutherland_algorithm(self):
+        """Алгоритм Сазерленда-Коэна (заглушка)"""
+        if not self.rectangle or not self.lines:
+            messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
+            return
+        
+        messagebox.showinfo("Алгоритм Сазерленда-Коэна", "Реализация алгоритма Сазерленда-Коэна будет здесь")
+        self.info_label.config(text="Выбран алгоритм: Сазерленда-Коэна")
+
+
+    def midpoint_algorithm(self):
+        """Алгоритм средней точки (заглушка)"""
+        if not self.rectangle or not self.lines:
+            messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
+            return
+        
+        messagebox.showinfo("Алгоритм средней точки", "Реализация алгоритма средней точки будет здесь")
+        self.info_label.config(text="Выбран алгоритм: средней точки")
+
+
+
+    def draw_polygon(self):
+        if self.polygon and len(self.polygon.points) >= 3:
+            points = self.polygon.points
+            n = len(points)
+
+            for i in range(n):
+                p1 = points[i]
+                p2 = points[(i+1)%n]
+
+                x1, y1 = self.coords_to_screen(p1.x, p1.y)
+                x2, y2 = self.coords_to_screen(p2.x, p2.y)
+
+                self.canvas.create_line(x1, y1, x2, y2, fill='blue', width=2.3, tags='polygon')
 
     def draw_lines(self):
         if self.lines:
@@ -88,7 +138,7 @@ class Window:
                 if self.read_data_from_file(filepath):
                     self.select_file = filepath
                     self.draw_grid()
-                    self.draw_rectangle()
+                    self.draw_polygon()
                     self.draw_lines()
 
 
@@ -105,11 +155,11 @@ class Window:
 
 
     def get_center(self):
-        if self.rectangle is None:
+        if self.polygon is None:
             return 0, 0, self.canvas_width / 2, self.canvas_height / 2
 
-        center_w_x = (self.rectangle.x_min + self.rectangle.x_max) / 2
-        center_w_y = (self.rectangle.y_min + self.rectangle.y_max) / 2
+        center_w_x = (self.polygon.x_min + self.polygon.x_max) / 2
+        center_w_y = (self.polygon.y_min + self.polygon.y_max) / 2
 
         screen_center_x = self.canvas_width / 2
         screen_center_y = self.canvas_height / 2
@@ -179,7 +229,7 @@ class Window:
             lines = f.readlines()
         
         self.lines = []
-        self.rectangle = None
+        self.polygon = None
         
         #удаление пустых строк
         data_lines = []
@@ -188,24 +238,47 @@ class Window:
             if line:
                 data_lines.append(line)
         
-        rect_coords = []
-        for i in range(4):
-            coords = data_lines[i].split()
+        polygon_points = []
+        line_index = 0
+
+        points_set = set()
+        while line_index < len(data_lines):
+            coords = data_lines[line_index].split()
+            if len(coords) != 2:
+                break
+
             x = int(coords[0])
             y = int(coords[1])
-            rect_coords.append((x, y))
+            point_key = f"{x},{y}"
+            
+            # Если точка уже есть в многоугольнике и у нас уже есть хотя бы 3 точки,
+            # возможно, это начало отрезков
+            if point_key in points_set and len(polygon_points) >= 3:
+                # Проверяем, что дальше идут отрезки (четное количество строк)
+                remaining_lines = len(data_lines) - line_index
+                if remaining_lines >= 2 and remaining_lines % 2 == 0:
+                    break
+
+            polygon_points.append(Point(x, y))
+            points_set.add(point_key)
+            line_index += 1
         
-        A = Point(rect_coords[0][0], rect_coords[0][1])
-        B = Point(rect_coords[1][0], rect_coords[1][1])
-        C = Point(rect_coords[2][0], rect_coords[2][1])
-        D = Point(rect_coords[3][0], rect_coords[3][1])
-        self.rectangle = Rectangle(A, B, C, D)
+        if len(polygon_points) < 3:
+            messagebox.showerror("Ошибка", "Многоугольник должен содержать хотя бы 3 вершины")
+            return False
         
-        # читаем отрезки
-        line_index = 4
-        while line_index < len(data_lines):
+        # Создаем многоугольник
+        self.polygon = Polygon(polygon_points)
+
+
+        # Читаем отрезки (оставшиеся строки)
+        while line_index + 1 < len(data_lines):
             start_coords = data_lines[line_index].split()
             end_coords = data_lines[line_index + 1].split()
+            
+            if len(start_coords) != 2 or len(end_coords) != 2:
+                messagebox.showerror("Ошибка", "Неверный формат отрезка")
+                return False
             
             x1 = int(start_coords[0])
             y1 = int(start_coords[1])
@@ -219,7 +292,6 @@ class Window:
             line_index += 2
         
         return True
-
 
 if __name__ == "__main__":
     window = tk.Tk()
