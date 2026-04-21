@@ -34,7 +34,9 @@ class Sutherlan_Cohen:
 
         while True:
             # если точка A внутри окна, поменять точки местами
-            
+            if code_point1 == 0:
+                p1, p2 = p2, p1
+                code_point1, code_point2 = code_point2, code_point1
 
             # тривиальные случаи
             # 1 - отрезок полностью внутри
@@ -46,3 +48,19 @@ class Sutherlan_Cohen:
                 return None
             
 
+            # заменить точку A на точку пересечения со стороной окна
+            if code_point1 & self.LEFT:
+                x = self.x_min
+                y = p1.y + (p2.y - p1.y) * (self.x_min - p1.x) / (p2.x - p1.x)
+            elif code_point1 & self.RIGHT:
+                x = self.x_max
+                y = p1.y + (p2.y - p1.y) * (self.x_max - p1.x) / (p2.x - p1.x)
+            elif code_point1 & self.BOTTOM:
+                y = self.y_min
+                x = p1.x + (p2.x - p1.x) * (self.y_min - p1.y) / (p2.y - p1.y)
+            elif code_point1 & self.TOP:
+                y = self.y_max
+                x = p1.x + (p2.x - p1.x) * (self.y_max - p1.y) / (p2.y - p1.y)
+        
+            p1 = Point(x, y)
+            code_point1 = self.bit_code_points(p1.x, p1.y)
