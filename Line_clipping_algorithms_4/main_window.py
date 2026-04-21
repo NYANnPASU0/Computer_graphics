@@ -4,6 +4,7 @@ import os
 import math
 from generate_file import generate_new_file
 from tkinter import messagebox, filedialog, simpledialog
+from Sutherland_Cohen_algorithm import Sutherlan_Cohen
 
 
 class Point:
@@ -40,6 +41,7 @@ class Window:
         self.select_file = None
         self.polygon = None
         self.lines = []  # список отрезков
+        self.c_l_sutherland = [] #список отсеченных отрезков по алгоритму сазерленда - коэна
 
         self.info_frame = ttk.Frame(self.root)
         self.info_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -87,14 +89,17 @@ class Window:
 
 
     def cohen_sutherland_algorithm(self):
-        """Алгоритм Сазерленда-Коэна (заглушка)"""
         if not self.rectangle or not self.lines:
             messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
             return
         
-        messagebox.showinfo("Алгоритм Сазерленда-Коэна", "Реализация алгоритма Сазерленда-Коэна будет здесь")
-        self.info_label.config(text="Выбран алгоритм: Сазерленда-Коэна")
+        line = Sutherlan_Cohen(self.polygon.x_min, self.polygon.y_min, self.polygon.x_max, self.polygon.y_max)
 
+        self.c_l_sutherland.clear()
+        for p1, p2 in self.lines:
+            result = line.clip_line(p1, p2)
+            if result:
+                self.c_l_sutherland.append(result)
 
     def midpoint_algorithm(self):
         """Алгоритм средней точки (заглушка)"""
