@@ -4,7 +4,6 @@ import os
 import math
 from generate_file import generate_new_file
 from tkinter import messagebox, filedialog, simpledialog
-from Sutherland_Cohen_algorithm import Sutherlan_Cohen
 
 
 class Point:
@@ -77,6 +76,13 @@ class Window:
             command=self.midpoint_algorithm, width=35)
         self.midpoint_btn.pack(pady=5)
 
+        self.file_label = ttk.Label(self.info_frame, text="Файл: не выбран", font=('Arial', 10, 'italic'), foreground='gray')
+        self.file_label.pack(pady=10)
+
+    def draw_base_scene(self):
+        self.draw_grid()
+        self.draw_polygon()
+        self.draw_lines()
 
     def cyrus_beck_algorithm(self):
         """Алгоритм Цируса-Бека (заглушка)"""
@@ -89,17 +95,52 @@ class Window:
 
 
     def cohen_sutherland_algorithm(self):
-        if not self.rectangle or not self.lines:
+        if not self.polygon or not self.lines:
             messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
             return
         
-        line = Sutherlan_Cohen(self.polygon.x_min, self.polygon.y_min, self.polygon.x_max, self.polygon.y_max)
+        self.draw_base_scene()
 
-        self.c_l_sutherland.clear()
-        for p1, p2 in self.lines:
-            result = line.clip_line(p1, p2)
-            if result:
-                self.c_l_sutherland.append(result)
+        from Sutherland_Cohen_algorithm import Sutherlan_Cohen
+
+        p1_orig, p2_orig = self.lines[0]
+
+        line = Sutherlan_Cohen(self.polygon.x_min, self.polygon.y_min, self.polygon.x_max, self.polygon.y_max)
+        result = line.clip_line(p1_orig, p2_orig)
+
+        x1_orig, y1_orig = self.coords_to_screen(p1_orig.x, p1_orig.y)
+        x2_orig, y2_orig = self.coords_to_screen(p2_orig.x, p2_orig.y)
+
+        self.canvas.create_text(x1_orig - 15, y1_orig - 15, text="P₁", 
+                            fill='black', font=('Arial', 11, 'bold'), tags='result_labels')
+        self.canvas.create_text(x2_orig + 15, y2_orig + 15, text="P₂", 
+                            fill='black', font=('Arial', 11, 'bold'), tags='result_labels')
+    
+        if result:
+            clipped_p1, clipped_p2 = result
+
+            x1_clip, y1_clip = self.coords_to_screen(clipped_p1.x, clipped_p1.y)
+            x2_clip, y2_clip = self.coords_to_screen(clipped_p2.x, clipped_p2.y)
+            
+            self.canvas.create_line(x1_orig, y1_orig, x2_orig, y2_orig, fill='green', width=1, tags='clipped')
+            self.canvas.create_line(x1_clip, y1_clip, x2_clip, y2_clip, fill='orange', width=2.3, tags='clipped')
+            
+            eps = 1e-5
+            # изменились ли точки после отсечения(чтобы понять подписывать или нет)
+            is_fully_inside = (abs(clipped_p1.x - p1_orig.x) < eps and abs(clipped_p1.y - p1_orig.y) < eps and
+                            abs(clipped_p2.x - p2_orig.x) < eps and abs(clipped_p2.y - p2_orig.y) < eps)
+
+            if not is_fully_inside:
+                self.canvas.create_oval(x1_clip-3, y1_clip-3, x1_clip+3, y1_clip+3, fill='black', tags='result_points')
+                self.canvas.create_oval(x2_clip-3, y2_clip-3, x2_clip+3, y2_clip+3, fill='black', tags='result_points')
+                
+                self.canvas.create_text(x1_clip + 10, y1_clip - 10, text="R", 
+                                        fill='black', font=('Arial', 12, 'bold'), tags='result_labels')
+                self.canvas.create_text(x2_clip + 10, y2_clip - 10, text="S", 
+                                        fill='black', font=('Arial', 12, 'bold'), tags='result_labels')
+                
+        self.canvas.create_oval(x1_orig-3, y1_orig-3, x1_orig+3, y1_orig+3, fill='black')
+        self.canvas.create_oval(x2_orig-3, y2_orig-3, x2_orig+3, y2_orig+3, fill='black')
 
     def midpoint_algorithm(self):
         """Алгоритм средней точки (заглушка)"""
@@ -142,9 +183,7 @@ class Window:
             if filepath:
                 if self.read_data_from_file(filepath):
                     self.select_file = filepath
-                    self.draw_grid()
-                    self.draw_polygon()
-                    self.draw_lines()
+                    self.file_label.config(text=f"Файл: {os.path.basename(filepath)}", foreground='black')
 
 
     def create_menu(self):
@@ -182,6 +221,7 @@ class Window:
 
 
     def draw_grid(self):
+
         for widget in self.canvas_container.winfo_children():
             widget.destroy()
 
