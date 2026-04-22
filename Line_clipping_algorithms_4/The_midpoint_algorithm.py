@@ -4,8 +4,9 @@ from Sutherland_Cohen_algorithm import Sutherlan_Cohen
 class Midpoint(Sutherlan_Cohen):
     def __init__(self, x_min, y_min, x_max, y_max):
         super().__init__(x_min, y_min, x_max, y_max)
+        self.created_points = []
 
-    def clip_line(self, p1, p2, result_line, pixel_size = 1.0):
+    def clip_line(self, p1, p2, result_line=None, pixel_size = 0.1):
         if result_line is None:
             result_line = []
 
@@ -40,6 +41,8 @@ class Midpoint(Sutherlan_Cohen):
         mid_x = (p1.x + p2.x) / 2.0
         mid_y = (p1.y + p2.y) / 2.0
         mid_point = Point(mid_x, mid_y)
+
+        self.created_points.append(mid_point)
 
         # рекурсивно выполнить алгоритм ядля отрезков AC и CB
         self.clip_line(p1, mid_point, result_line, pixel_size)

@@ -146,9 +146,10 @@ class Window:
             messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
             return
         
-        self.canvas.delete('clipped')
+        self.canvas.delete('clipped_result')
         self.canvas.delete('result_labels')
         self.canvas.delete('result_points')
+        self.canvas.delete('mid_points')
 
         self.draw_base_scene()
 
@@ -156,9 +157,8 @@ class Window:
         p1_orig, p2_orig = self.lines[0]
 
         line = Midpoint(self.polygon.x_min, self.polygon.y_min, self.polygon.x_max, self.polygon.y_max)
-        pixel_size=1.0
 
-        result_lines = line.clip_line(p1_orig, p2_orig, pixel_size=1.0)
+        result_lines = line.clip_line(p1_orig, p2_orig, pixel_size=0.1)
     
         x1_orig, y1_orig = self.coords_to_screen(p1_orig.x, p1_orig.y)
         x2_orig, y2_orig = self.coords_to_screen(p2_orig.x, p2_orig.y)
@@ -169,28 +169,24 @@ class Window:
                             fill='black', font=('Arial', 11, 'bold'), tags='result_labels')
         
         if result_lines:
-            # Рисуем все найденные видимые сегменты
             for i, (clipped_p1, clipped_p2) in enumerate(result_lines):
                 x1_c, y1_c = self.coords_to_screen(clipped_p1.x, clipped_p1.y)
                 x2_c, y2_c = self.coords_to_screen(clipped_p2.x, clipped_p2.y)
                 
-                # Рисуем видимую часть оранжевым цветом
                 self.canvas.create_line(x1_c, y1_c, x2_c, y2_c, 
                                     fill='orange', width=3, tags='clipped_result')
                 
-                # Опционально: можно поставить точки на концах первого и последнего сегмента
-                # чтобы показать границы видимости, как R и S в Сазерленде-Коэне
+                
                 if i == 0:
-                    self.canvas.create_oval(x1_c-4, y1_c-4, x1_c+4, y1_c+4, 
-                                        fill='red', tags='result_points')
                     self.canvas.create_text(x1_c + 10, y1_c - 10, text="R", 
-                                        fill='red', font=('Arial', 12, 'bold'), tags='result_labels')
+                                        fill='black', font=('Arial', 12, 'bold'), tags='result_labels')
                 
                 if i == len(result_lines) - 1:
-                    self.canvas.create_oval(x2_c-4, y2_c-4, x2_c+4, y2_c+4, 
-                                        fill='red', tags='result_points')
                     self.canvas.create_text(x2_c + 10, y2_c - 10, text="S", 
-                                        fill='red', font=('Arial', 12, 'bold'), tags='result_labels')
+                                        fill='black', font=('Arial', 12, 'bold'), tags='result_labels')
+        for p in line.created_points:
+            sx, sy = self.coords_to_screen(p.x, p.y)
+            self.canvas.create_oval(sx-2, sy-2, sx+2, sy+2, fill='black', tags='mid_points')
 
 
     def draw_polygon(self):
