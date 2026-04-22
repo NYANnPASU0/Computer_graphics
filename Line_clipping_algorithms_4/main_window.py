@@ -3,7 +3,7 @@ from tkinter import ttk
 import os
 import math
 from generate_file import generate_new_file
-from tkinter import messagebox, filedialog, simpledialog
+from tkinter import messagebox
 
 
 class Point:
