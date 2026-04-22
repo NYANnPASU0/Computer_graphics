@@ -84,13 +84,59 @@ class Window:
         self.draw_lines()
 
     def cyrus_beck_algorithm(self):
-        """Алгоритм Цируса-Бека (заглушка)"""
-        if not self.rectangle or not self.lines:
+        if not self.polygon or not self.lines:
             messagebox.showwarning("Предупреждение", "Сначала загрузите файл с прямоугольником и отрезками")
             return
         
-        messagebox.showinfo("Алгоритм Цируса-Бека", "Реализация алгоритма Цируса-Бека будет здесь")
-        self.info_label.config(text="Выбран алгоритм: Цируса-Бека")
+        self.canvas.delete('clipped')
+        self.canvas.delete('result_labels')
+        self.canvas.delete('result_points')
+        self.canvas.delete('inters_points')
+        
+        self.draw_base_scene()
+
+        from Cirrus_Beck_algorithm import Cyrus_Beck
+
+        p1_orig, p2_orig = self.lines[0]
+
+        line = Cyrus_Beck(self.polygon)
+        all_intersect = line.get_all_intersections(p1_orig, p2_orig)
+        result = line.clip_line(p1_orig, p2_orig)
+
+        x1_orig, y1_orig = self.coords_to_screen(p1_orig.x, p1_orig.y)
+        x2_orig, y2_orig = self.coords_to_screen(p2_orig.x, p2_orig.y)
+
+        self.canvas.create_text(x1_orig - 15, y1_orig - 15, text="P₁", 
+                            fill='black', font=('Arial', 11, 'bold'), tags='result_labels')
+        self.canvas.create_text(x2_orig + 15, y2_orig + 15, text="P₂", 
+                            fill='black', font=('Arial', 11, 'bold'), tags='result_labels')
+        
+        for pt in all_intersect:
+            sx, sy = self.coords_to_screen(pt.x, pt.y)
+            self.canvas.create_oval(sx-3, sy-3, sx+3, sy+3, fill='purple', outline='black', tags = 'inters_points')
+
+        if result:
+            clipped_p1, clipped_p2 = result
+
+            x1_clip, y1_clip = self.coords_to_screen(clipped_p1.x, clipped_p1.y)
+            x2_clip, y2_clip = self.coords_to_screen(clipped_p2.x, clipped_p2.y)
+            
+            self.canvas.create_line(x1_orig, y1_orig, x2_orig, y2_orig, fill='green', width=1, tags='clipped')
+            
+            self.canvas.create_line(x1_clip, y1_clip, x2_clip, y2_clip, fill='orange', width=2.3, tags='clipped')
+            
+            self.canvas.create_oval(x1_clip-3, y1_clip-3, x1_clip+3, y1_clip+3, fill='black', tags='result_points')
+            self.canvas.create_oval(x2_clip-3, y2_clip-3, x2_clip+3, y2_clip+3, fill='black', tags='result_points')
+            
+            self.canvas.create_text(x1_clip + 10, y1_clip - 10, text="R", 
+                                    fill='black', font=('Arial', 12, 'bold'), tags='result_labels')
+            self.canvas.create_text(x2_clip + 10, y2_clip - 10, text="S", 
+                                    fill='black', font=('Arial', 12, 'bold'), tags='result_labels')
+        
+
+        self.canvas.create_oval(x1_orig-3, y1_orig-3, x1_orig+3, y1_orig+3, fill='black')
+        self.canvas.create_oval(x2_orig-3, y2_orig-3, x2_orig+3, y2_orig+3, fill='black')
+        
 
 
     def cohen_sutherland_algorithm(self):
@@ -140,6 +186,7 @@ class Window:
                 
         self.canvas.create_oval(x1_orig-3, y1_orig-3, x1_orig+3, y1_orig+3, fill='black')
         self.canvas.create_oval(x2_orig-3, y2_orig-3, x2_orig+3, y2_orig+3, fill='black')
+
 
     def midpoint_algorithm(self):
         if not self.polygon or not self.lines:

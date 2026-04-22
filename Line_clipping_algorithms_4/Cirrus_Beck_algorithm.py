@@ -4,7 +4,7 @@ class Cyrus_Beck:
     def __init__(self, polygon):
         self.polygon = polygon
         self.edges = []
-
+        
         n = len(polygon.points)
         cx = sum(p.x for p in polygon.points) / n
         cy = sum(p.y for p in polygon.points) / n
@@ -23,20 +23,22 @@ class Cyrus_Beck:
             to_center_x = cx - mid_x
             to_center_y = cy - mid_y
             
+            # перпендикуляр
             n_cand1 = (-dy, dx)
             dot_center = to_center_x * n_cand1[0] + to_center_y * n_cand1[1]
             
+            # нормаль к центру многоугольника
             if dot_center > 0:
-                n = (-n_cand1[0], -n_cand1[1])
+                n_vec = (-n_cand1[0], -n_cand1[1])
             else:
-                n = n_cand1
+                n_vec = n_cand1
                 
             self.edges.append({
                 'point': p1,
                 'vector': (dx, dy),
-                'normal': n 
+                'normal': n_vec 
             })
-    
+
     def clip_line(self, p1, p2):
         P_napravlen = (p2.x - p1.x, p2.y - p1.y)
         
@@ -48,18 +50,16 @@ class Cyrus_Beck:
             Vi = edge['point'] 
             Ni = edge['normal']
             
-            # -((P1 - Vi), Ni)
             w_x = p1.x - Vi.x
             w_y = p1.y - Vi.y
-            numer = -(w_x * Ni[0] + w_y * Ni[1])
+            numer = -(w_x * Ni[0] + w_y * Ni[1]) # -((P1 - Vi), Ni)
 
-            # ((P2 - P1), Ni)
-            denom = P_napravlen[0] * Ni[0] + P_napravlen[1] * Ni[1]
+            denom = P_napravlen[0] * Ni[0] + P_napravlen[1] * Ni[1] # ((P2 - V1), Ni)
             
-            # знаменатель 0, прямая параллельна ребру
+            # параллельность прямой
             if abs(denom) < 1e-9:
                 if numer < 0:
-                    return None # параллельна и находится снаружи
+                    return None # вне полуплоскости
                 continue
             
             t = numer / denom
@@ -72,8 +72,34 @@ class Cyrus_Beck:
             if t_entering > t_leaving:
                 return None
         
-        # отрезок видим (хотя бы частично)
+        # отрезок видим 
         res_p1 = Point(p1.x + t_entering * P_napravlen[0], p1.y + t_entering * P_napravlen[1])
         res_p2 = Point(p1.x + t_leaving * P_napravlen[0], p1.y + t_leaving * P_napravlen[1])
         
         return (res_p1, res_p2)
+    
+
+    def get_all_intersections(self, p1, p2):
+        intersections = []
+        P_napravlen = (p2.x - p1.x, p2.y - p1.y)
+        
+        for edge in self.edges:
+            Vi = edge['point']
+            Ni = edge['normal']
+            
+            w_x = p1.x - Vi.x
+            w_y = p1.y - Vi.y
+            numer = -(w_x * Ni[0] + w_y * Ni[1])
+            denom = P_napravlen[0] * Ni[0] + P_napravlen[1] * Ni[1]
+            
+            if abs(denom) < 1e-9:
+                continue
+            
+            t = numer / denom
+            
+            inter_x = p1.x + t * P_napravlen[0]
+            inter_y = p1.y + t * P_napravlen[1]
+            
+            intersections.append(Point(inter_x, inter_y))
+        
+        return intersections
