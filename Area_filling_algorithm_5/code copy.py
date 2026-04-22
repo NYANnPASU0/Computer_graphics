@@ -177,7 +177,7 @@ class Fill_area:
         self.btn_step2.pack(anchor='w', pady=2)
         
         self.btn_step3 = ttk.Button(input_panel, text="3. Заливка", 
-                                   command=self.root.quit, state=tk.DISABLED)
+                                   command=self.fill_polygon, state=tk.DISABLED)
         self.btn_step3.pack(anchor='w', pady=2)
         
         ttk.Button(input_panel, text="Очистить всё", 
@@ -262,22 +262,60 @@ class Fill_area:
 
 
     def sort_list(self):
+        """Шаг 2: упорядочивание каждого из y-списков по возрастанию."""
         self.text_log.config(state=tk.NORMAL)
         self.text_log.delete('1.0', tk.END)
-        
-        sorted_y = sorted(self.lbl_fill.keys())
 
-        for y in sorted_y:
-            self.lbl_fill[y] = sorted(set(self.lbl_fill[y]))
-        
+        # ВАЖНО: НЕ удаляем дубликаты! Вершины должны учитываться дважды
+        # для сохранения чётности пересечений
+        for y in sorted(self.lbl_fill.keys()):
+            self.lbl_fill[y] = sorted(self.lbl_fill[y])  # Просто сортируем
             log_line = f"Y={y}: {self.lbl_fill[y]}\n"
             self.text_log.insert(tk.END, log_line)
 
-
         self.text_log.config(state=tk.DISABLED)
-
         self.btn_step3.config(state=tk.NORMAL)
         self.btn_step2.config(state=tk.DISABLED)
+        print("✅ Шаг 2 завершён: списки отсортированы по возрастанию.")
+
+
+    def fill_polygon(self):
+        """
+        Шаг 3: заполнение (закрашивание) всех отрезков вида [x_{2i}, x_{2i+1}].
+        Явно закрашиваем каждый пиксель внутри отрезка.
+        """
+        self.canvas.delete('fill')  # Очищаем предыдущую заливку
+
+        for y in sorted(self.lbl_fill.keys()):
+            x_list = self.lbl_fill[y]
+            
+            # Проверяем чётность - должно быть чётное количество точек
+            if len(x_list) % 2 != 0:
+                print(f"⚠️ Y={y}: НЕЧЁТНОЕ количество точек {len(x_list)}! Это ошибка.")
+                print(f"   Список: {x_list}")
+                continue  # Пропускаем эту строку
+            
+            # Закрашиваем парами: [x0, x1], [x2, x3], ...
+            for i in range(0, len(x_list), 2):
+                x_start = x_list[i]
+                x_end = x_list[i+1]
+                
+                # Явно закрашиваем ВСЕ пиксели от x_start до x_end включительно
+                for x in range(x_start, x_end + 1):
+                    sx, sy = self.coords_to_screen(x, y)
+                    # Рисуем пиксель как маленький квадратик
+                    self.canvas.create_rectangle(
+                        sx - self.cell//2 + 1, sy - self.cell//2 + 1,
+                        sx + self.cell//2 - 1, sy + self.cell//2 - 1,
+                        fill='lightblue', outline='', tags='fill'
+                    )
+
+        # Возвращаем контур и сетку на передний план
+        self.canvas.tag_raise('polygon')
+        self.canvas.tag_raise('grid')
+        
+        self.btn_step3.config(state=tk.DISABLED)
+        print("✅ Шаг 3 завершён: многоугольник растеризован вместе с внутренними точками.")
 
 
     def clear_all(self):
