@@ -188,6 +188,9 @@ class Window:
             sx, sy = self.coords_to_screen(p.x, p.y)
             self.canvas.create_oval(sx-2, sy-2, sx+2, sy+2, fill='black', tags='mid_points')
 
+        self.canvas.create_oval(x1_orig-3, y1_orig-3, x1_orig+3, y1_orig+3, fill='black')
+        self.canvas.create_oval(x2_orig-3, y2_orig-3, x2_orig+3, y2_orig+3, fill='black')
+
 
     def draw_polygon(self):
         if self.polygon and len(self.polygon.points) >= 3:
