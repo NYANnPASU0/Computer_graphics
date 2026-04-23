@@ -99,7 +99,12 @@ class Cyrus_Beck:
             
             inter_x = p1.x + t * P_napravlen[0]
             inter_y = p1.y + t * P_napravlen[1]
+
+            inter_type = 'entering' if denom < 0 else 'leaving'
             
-            intersections.append(Point(inter_x, inter_y))
+            intersections.append({
+                'point': Point(inter_x, inter_y),
+                'type': inter_type
+            })
         
         return intersections

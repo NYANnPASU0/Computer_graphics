@@ -111,9 +111,18 @@ class Window:
         self.canvas.create_text(x2_orig + 15, y2_orig + 15, text="P₂", 
                             fill='black', font=('Arial', 11, 'bold'), tags='result_labels')
         
-        for pt in all_intersect:
+        for pt_data in all_intersect:
+            pt = pt_data['point']
+            p_type = pt_data['type']
+            
             sx, sy = self.coords_to_screen(pt.x, pt.y)
-            self.canvas.create_oval(sx-3, sy-3, sx+3, sy+3, fill='purple', outline='black', tags = 'inters_points')
+            
+            if p_type == 'entering':
+                color = 'red'
+            else:
+                color = 'blue'
+                
+            self.canvas.create_oval(sx-3, sy-3, sx+3, sy+3, fill=color, outline='black', tags='inters_points')
 
         if result:
             clipped_p1, clipped_p2 = result
