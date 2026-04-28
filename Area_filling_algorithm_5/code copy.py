@@ -231,7 +231,34 @@ class Fill_area:
 
     def raster_edges(self):
         self.canvas.delete('pixel')
-        self.lbl_fill.clear()
+        self.edge_pixels = []
+        
+        if not self.polygon or len(self.polygon.points) < 2:
+            return
+
+        points = self.polygon.points
+        n = len(points)
+
+        for i in range(n):
+            p1 = points[i]
+            p2 = points[(i + 1) % n]
+
+            if p1.y == p2.y:
+                continue
+
+            pixels = self.algorithm_brezenhem(p1.x, p1.y, p2.x, p2.y)
+            self.edge_pixels.extend(pixels)
+
+            for px, py in pixels:
+                screen_x, screen_y = self.coords_to_screen(px, py)
+                self.canvas.create_oval(
+                    screen_x - 2, screen_y - 2, 
+                    screen_x + 2, screen_y + 2, 
+                    fill='black', outline='', tags='pixel'
+                )
+
+        self.canvas.update_idletasks()
+        self.btn_step2.config(state=tk.NORMAL)
 
 
     def sort_list(self):
