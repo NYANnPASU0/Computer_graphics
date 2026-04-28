@@ -33,6 +33,7 @@ class Midpoint(Sutherlan_Cohen):
         if code1 == 0 and code2 == 0:
             result_line.append((p1, p2))
             return result_line
+        
         # оба снаружи
         if (code1 & code2) != 0:
             return result_line

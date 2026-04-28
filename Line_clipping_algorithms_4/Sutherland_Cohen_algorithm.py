@@ -48,7 +48,6 @@ class Sutherlan_Cohen:
                 return None
             
             
-            
 
             # заменить точку A на точку пересечения со стороной окна
             if code_point1 & self.LEFT:

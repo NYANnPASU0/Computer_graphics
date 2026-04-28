@@ -61,7 +61,7 @@ class Window:
         title_label.pack(pady=10)
 
         self.cyrus_beck_btn = ttk.Button(
-            button_frame, text="Алгоритм Цируса-Бека", 
+            button_frame, text="Алгоритм Кируса-Бека", 
             command=self.cyrus_beck_algorithm, width=35)
         self.cyrus_beck_btn.pack(pady=8)
 
