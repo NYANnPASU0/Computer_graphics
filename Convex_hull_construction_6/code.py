@@ -61,10 +61,16 @@ class Jarvis_algorithm:
         
         self.points_frame = ttk.Frame(control_place)
         self.points_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+
+        ttk.Button(control_place, text="Отобразить точки", command=self.display_points, width=15).pack(fill=tk.X, pady=(0, 3))
+
         
         ttk.Separator(control_place, orient='horizontal').pack(fill=tk.X, pady=3)
         
-        ttk.Button(control_place, text="Отобразить", command=self.display_points, width=15).pack(fill=tk.X, pady=(0, 3))
+        ttk.Label(control_place, text="Построение выпуклой оболочки ", font=('Arial', 9), style='Red.TLabel').pack(pady=(0, 3))
+        ttk.Button(control_place, text="Пошагово", command=self.show_next_step, width=20).pack(fill=tk.X, pady=(0, 3))
+        ttk.Button(control_place, text="Автопоказ", command=self.auto_play, width=20).pack(fill=tk.X, pady=(0, 3))
+
         ttk.Button(control_place, text="Очистить", command=self.clear, width=15).pack(fill=tk.X)
 
         self.create_point_entries()
@@ -164,6 +170,7 @@ class Jarvis_algorithm:
         
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+        
 
     def get_center(self):
         w_center_x, w_center_y = 0, 0
@@ -210,7 +217,19 @@ class Jarvis_algorithm:
                 start = p
         return start
 
-
+    def show_next_step(self):
+        if self.current_step == -1:
+            self.convex_hull = []
+            self.algorithm_steps = []
+            self.convex_hull = self.jarvis_march()
+            self.current_step = 0
+            
+    def auto_play(self):
+        if self.current_step == -1:
+            self.convex_hull = []
+            self.algorithm_steps = []
+            self.convex_hull = self.jarvis_march()
+            self.current_step = 0
 
     def clear(self):
         self.canvas.delete('point')
