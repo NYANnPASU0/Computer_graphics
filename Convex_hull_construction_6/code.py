@@ -28,8 +28,10 @@ class Jarvis_algorithm:
         self.y_min = None
         self.y_max = None
 
-        self.canvas_width = 700
+        self.canvas_width = 730
         self.canvas_height = 700
+
+        self.current_step = -1
 
         self.create_interface()
         self.draw_grid()
@@ -41,7 +43,7 @@ class Jarvis_algorithm:
         self.canvas_container = ttk.Frame(main_place)
         self.canvas_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        control_place = ttk.LabelFrame(main_place, padding=5, width=200)
+        control_place = ttk.LabelFrame(main_place, padding=2, width=280)
         control_place.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
 
         top_frame = ttk.Frame(control_place)
@@ -68,9 +70,7 @@ class Jarvis_algorithm:
         ttk.Separator(control_place, orient='horizontal').pack(fill=tk.X, pady=3)
         
         ttk.Label(control_place, text="Построение выпуклой оболочки ", font=('Arial', 9), style='Red.TLabel').pack(pady=(0, 3))
-        ttk.Button(control_place, text="Пошагово", command=self.show_next_step, width=20).pack(fill=tk.X, pady=(0, 3))
-        ttk.Button(control_place, text="Автопоказ", command=self.auto_play, width=20).pack(fill=tk.X, pady=(0, 3))
-
+        ttk.Button(control_place, text="-->", command=self.show_next_step, width=20).pack(fill=tk.X, pady=(0, 3))
         ttk.Button(control_place, text="Очистить", command=self.clear, width=15).pack(fill=tk.X)
 
         self.create_point_entries()
@@ -216,23 +216,79 @@ class Jarvis_algorithm:
             if p.x < start.x or (p.x == start.x and p.y < start.y):
                 start = p
         return start
+    
+    def alg_jarvis(self):
+        self.algorithm_steps = []
+        start = self.find_start_point()
+
+        hull = []
+        current_point = start
+        while True:
+            hull.append(current_point)
+            self.algorithm_steps.append(hull.copy())
+
+            next = None
+            for i in self.points:
+                if i == current_point: continue
+                if next == None: next = i
+
+                cross = self.cross_product(current_point, next, i) #косое произведение для определение след.точки
+                if cross < 0:
+                    next = i
+                elif abs(cross) < 1e-9:
+                    if self.distance_sq(current_point, next) > self.distance_sq(current_point, i):
+                        next = i
+            
+            current_point = next
+            if current_point == start:
+                break
+
+        hull.append(start)
+        self.algorithm_steps.append(hull.copy())
+
+        return hull
+
+
 
     def show_next_step(self):
         if self.current_step == -1:
-            self.convex_hull = []
-            self.algorithm_steps = []
-            self.convex_hull = self.jarvis_march()
-            self.current_step = 0
+                self.points = []
+                if hasattr(self, 'point_entries'):
+                    for x_var, y_var in self.point_entries:
+                        x = float(x_var.get())
+                        y = float(y_var.get())
+                        self.points.append(Point(x, y))
             
-    def auto_play(self):
-        if self.current_step == -1:
-            self.convex_hull = []
-            self.algorithm_steps = []
-            self.convex_hull = self.jarvis_march()
-            self.current_step = 0
+                self.algorithm_steps = []
+                self.convex_hull = self.alg_jarvis()
+                self.current_step = 0
+            
+        if self.current_step < len(self.algorithm_steps):
+            self.draw_step()
+            self.display_points()
+            self.current_step += 1
+
+    
+    def draw_step(self):
+        if self.current_step < 0 or self.current_step >= len(self.algorithm_steps):
+            return
+        self.canvas.delete('hull_line')
+
+        current_hull = self.algorithm_steps[self.current_step]
+
+        if len(current_hull) >= 2:
+            for i in range(len(current_hull) - 1):
+                p1 = current_hull[i]
+                p2 = current_hull[i + 1]
+                screen_x1, screen_y1 = self.coords_to_screen(p1.x, p1.y)
+                screen_x2, screen_y2 = self.coords_to_screen(p2.x, p2.y)
+                self.canvas.create_line(screen_x1, screen_y1, screen_x2, screen_y2, fill='blue', width=2, tags = 'hull_line')
+                
+
 
     def clear(self):
         self.canvas.delete('point')
+        self.canvas.delete('hull_line')
         if hasattr(self, 'point_entries'):
             for x_var, y_var in self.point_entries:
                 x_var.set("0")
