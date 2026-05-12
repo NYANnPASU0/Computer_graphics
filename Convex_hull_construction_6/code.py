@@ -178,12 +178,14 @@ class Jarvis_algorithm:
         screen_center_y = self.canvas_height // 2
         return w_center_x, w_center_y, screen_center_x, screen_center_y
     
+    
     def coords_to_screen(self, x, y):
         w_center_x, w_center_y, screen_center_x, screen_center_y = self.get_center()
         screen_x = screen_center_x + (x - w_center_x) * self.cell
         screen_y = screen_center_y - (y - w_center_y) * self.cell
         return screen_x, screen_y
     
+
     def display_points(self):
         if not hasattr(self, 'point_entries'):
             return

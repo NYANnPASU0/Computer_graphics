@@ -181,7 +181,6 @@ class Rasterization_section:
             self.canvas.create_text(screen_x + 5, screen_y + 15, text="0",
                                     fill='gray', font=('Arial', 10, 'bold'), tags='grid')
             
-        """Изменено"""
 
     def input_fields(self):
         input_panel = ttk.LabelFrame(self.root, padding=10, text="Управление")
@@ -287,7 +286,6 @@ class Rasterization_section:
         self.draw_grid()
 
     def init_polygon(self):
-        """Инициализация многоугольника с жёстко заданными вершинами."""
         self.clear_all()  # сбрасываем предыдущее
         self.polygon_mode = True
         # Задаём вершины в мировых координатах (не пикселях)
@@ -352,8 +350,7 @@ class Rasterization_section:
                 err += dx
                 y += sy
 
-    def polygon_step1(self):
-        """Шаг 1: растеризация всех не горизонтальных рёбер."""
+    def polygon_step1(self): # растеризация
         if not self.polygon_mode:
             return
         self.step_state = 1
@@ -383,7 +380,7 @@ class Rasterization_section:
 
         self.btn_poly_step2.config(state=tk.NORMAL)
         self.btn_poly_step1.config(state=tk.DISABLED)
-        print(f"Шаг 1 завершён. Найдено {len(self.edge_pixels)} граничных пикселей.")
+        
 
     def polygon_step2(self):
         if self.step_state != 1:
@@ -394,7 +391,7 @@ class Rasterization_section:
             self.y_buckets[y] = sorted(set(self.y_buckets[y]))
         self.btn_poly_step2.config(state=tk.DISABLED)
         self.btn_poly_step3.config(state=tk.NORMAL)
-        print("Шаг 2 завершён. Списки отсортированы, повторы удалены.")
+        
 
     def polygon_step3(self):
         """Шаг 3: заливка внутренних точек."""
@@ -418,7 +415,6 @@ class Rasterization_section:
         self.canvas.tag_raise('outline')
         
         self.btn_poly_step3.config(state=tk.DISABLED)
-        print("Шаг 3 завершён. Заливка выполнена.")
 
 if __name__ == "__main__":
     window = tk.Tk()
