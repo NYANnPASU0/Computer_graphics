@@ -159,8 +159,8 @@ class Rasterization_section:
                                     fill='gray', font=('Arial', 10, 'bold'), tags='grid')
 
     def input_fields(self):
-        right_panel = ttk.Frame(self.root)
-        right_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=1, pady=1)
+        right_panel = ttk.Frame(self.root, width=300)
+        right_panel.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
 
         canvas = tk.Canvas(right_panel, width=350)
         canvas.pack(side=tk.LEFT, fill=tk.Y, expand=False)
@@ -177,7 +177,6 @@ class Rasterization_section:
         canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Выбор количества вершин
         vertex_count_frame = ttk.LabelFrame(self.scrollable_frame, padding=10, text="Настройки многоугольника")
         vertex_count_frame.pack(fill=tk.X, pady=5)
 
@@ -189,17 +188,13 @@ class Rasterization_section:
 
         ttk.Button(vertex_count_frame, text="Обновить", command=self.update_vertex_inputs).pack(anchor='w', pady=3)
 
-        # Контейнер для полей вершин
         self.vertex_inputs_frame = ttk.LabelFrame(self.scrollable_frame, padding=10, text="Координаты вершин")
         self.vertex_inputs_frame.pack(fill=tk.X, pady=5)
 
-        # Кнопки управления
         btn_frame = ttk.Frame(self.scrollable_frame)
         btn_frame.pack(fill=tk.X, pady=1)
 
         ttk.Button(btn_frame, text="1. Создание многоугольника", command=self.create_polygon_from_inputs).pack(anchor='w', pady=2)
-
-        # Кнопки шагов растеризации
         self.btn_poly_step1 = ttk.Button(btn_frame, text="2. Растеризация рёбер", command=self.polygon_step1, state=tk.DISABLED)
         self.btn_poly_step1.pack(anchor='w', pady=2)
         self.btn_poly_step2 = ttk.Button(btn_frame, text="3. Сортировка списков", command=self.polygon_step2, state=tk.DISABLED)
@@ -266,13 +261,10 @@ class Rasterization_section:
         
         self.vertices_world = []
         for x_entry, y_entry in self.vertex_entries:
-            try:
-                x = int(x_entry.get())
-                y = int(y_entry.get())
-                self.vertices_world.append((x, y))
-            except ValueError:
-                continue
-        
+            x = int(x_entry.get())
+            y = int(y_entry.get())
+            self.vertices_world.append((x, y))
+            
         self.polygon_world = self.vertices_world + [self.vertices_world[0]]
         self.y_buckets = {}
         self.edge_pixels = []
