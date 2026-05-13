@@ -2,26 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 import math
 
-class Point:
-    def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
-
-class Section:
-    def __init__(self, a: Point, b: Point):
-        self.a = a
-        self.b = b
-
-    def get_borders(self, indent: int = 3):
-        min_x = min(self.a.x, self.b.x)
-        min_y = min(self.a.y, self.b.y)
-        max_x = max(self.a.x, self.b.x)
-        max_y = max(self.a.y, self.b.y)
-        min_x -= indent
-        min_y -= indent
-        max_x += indent
-        max_y += indent
-        return min_x, min_y, max_x, max_y
 
 class Rasterization_section:
     def __init__(self, root):
@@ -86,12 +66,6 @@ class Rasterization_section:
         w_center_x, w_center_y, screen_center_x, screen_center_y = self.get_center()
         screen_x = screen_center_x + (x - w_center_x) * self.cell
         screen_y = screen_center_y - (y - w_center_y) * self.cell
-        return screen_x, screen_y
-    
-    def half_coords_to_screen(self, x, y):
-        w_center_x, w_center_y, screen_center_x, screen_center_y = self.get_center()
-        screen_x = screen_center_x + (x / 2 - w_center_x) * self.cell
-        screen_y = screen_center_y - (y / 2 - w_center_y) * self.cell
         return screen_x, screen_y
 
     def draw_grid(self):
@@ -215,8 +189,8 @@ class Rasterization_section:
         my_coordinates = [
             (1, 1),
             (2, 6),
-            (4, 2), 
-            (6, 5),
+            (4, 4), 
+            (7, 5),
             (8, 1),
         ]
 
@@ -279,41 +253,7 @@ class Rasterization_section:
         self.btn_poly_step1.config(state=tk.NORMAL)
         self.btn_poly_step2.config(state=tk.DISABLED)
         self.btn_poly_step3.config(state=tk.DISABLED)
-
-
-    def algorithm_brezenhem(self, x0, y0, x1, y1):
-        pixels = []
-        dx = abs(x1 - x0)
-        dy = abs(y1 - y0)
-        sx = 1 if x0 < x1 else -1
-        sy = 1 if y0 < y1 else -1
-        err = dx - dy
-        x, y = x0, y0
-
-        while True:
-            pixels.append((x, y))
-            if x == x1 and y == y1:
-                break
-            e2 = 2 * err
-            if e2 > -dy:
-                err -= dy
-                x += sx
-            if e2 < dx:
-                err += dx
-                y += sy
-        return pixels
-
-    def rasterization_section(self):
-        if not self.section:
-            return
-        pixels = self.algorithm_brezenhem(self.section.a.x, self.section.a.y,
-                                          self.section.b.x, self.section.b.y)
-        for x, y in pixels:
-            screen_x, screen_y = self.coords_to_screen(x, y)
-            point_size = 2
-            self.canvas.create_oval(screen_x - point_size, screen_y - point_size,
-                                    screen_x + point_size, screen_y + point_size,
-                                    fill='black', width=2, tags='pixel')
+        
 
     def clear_all(self):
         self.section = None
@@ -333,27 +273,23 @@ class Rasterization_section:
         self.draw_grid()
 
     def rasterize_edge_brez(self, x1, y1, x2, y2):
-        x1_scaled = int(round(x1 * 2))
-        y1_scaled = int(round(y1 * 2))
-        x2_scaled = int(round(x2 * 2))
-        y2_scaled = int(round(y2 * 2))
-
-        dx = abs(x2_scaled - x1_scaled)
-        dy = abs(y2_scaled - y1_scaled)
-        sx = 1 if x1_scaled < x2_scaled else -1
-        sy = 1 if y1_scaled < y2_scaled else -1
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        sx = 1 if x1 < x2 else -1
+        sy = 1 if y1 < y2 else -1
         err = dx - dy
 
-        x, y = x1_scaled, y1_scaled
+        x, y = x1, y1
         while True:
             self.y_buckets.setdefault(y, []).append(x)
-            screen_x, screen_y = self.half_coords_to_screen(x, y)
-            point_size = 1.5
-            self.canvas.create_oval(screen_x - point_size, screen_y - point_size,
-                                    screen_x + point_size, screen_y + point_size,
-                                    fill='red', outline='red', tags='pixel')
+            screen_x, screen_y = self.coords_to_screen(x, y)
+            self.canvas.create_oval(
+                screen_x - 2, screen_y - 2,
+                screen_x + 2, screen_y + 2,
+                fill='darkred', outline='darkred', tags='pixel'
+            )
             self.edge_pixels.append((x, y))
-            if x == x2_scaled and y == y2_scaled:
+            if x == x2 and y == y2:
                 break
             e2 = 2 * err
             if e2 > -dy:
@@ -411,10 +347,13 @@ class Rasterization_section:
                 x_start = x_list[i]
                 x_end = x_list[i+1]
                 for x in range(x_start, x_end + 1):
-                    screen_x, screen_y = self.half_coords_to_screen(x, y)
-                    self.canvas.create_rectangle(screen_x - self.cell/4, screen_y - self.cell/4,
-                                                 screen_x + self.cell/4, screen_y + self.cell/4,
-                                                 fill='pink', outline='red', stipple='gray50', tags='fill')
+                    screen_x, screen_y = self.coords_to_screen(x, y)
+                    # Закрашиваем целую клетку
+                    self.canvas.create_rectangle(
+                        screen_x - self.cell/2, screen_y - self.cell/2,
+                        screen_x + self.cell/2, screen_y + self.cell/2,
+                        fill='pink', outline='red', stipple='gray50', tags='fill'
+                    )
         self.canvas.tag_raise('outline')
         self.btn_poly_step3.config(state=tk.DISABLED)
 
