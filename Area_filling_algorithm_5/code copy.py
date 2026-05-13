@@ -14,20 +14,21 @@ class Rasterization_section:
         self.circle = None
 
         self.polygon_mode = False
-        self.vertices_world = []
-        self.polygon_world = []
+        self.vertices_world = [] # вершины многоугольника из полей ввода
+        self.polygon_world = [] # вершины многоугольника с замыканием
         self.y_buckets = {}
         self.edge_pixels = []
         self.y_min = None
         self.y_max = None
         self.step_state = 0
         
-        # Для динамических полей ввода вершин
-        self.vertex_entries = []
-        self.num_vertices_var = tk.IntVar(value=5)
+        self.vertex_entries = [] # поля ввода координат
+        self.num_vertices_var = tk.IntVar(value=5) 
 
         self.canvas_width = 650
         self.canvas_height = 650
+
+        self.list_window = None
 
         self.input_fields()
         self.create_vertex_inputs()
@@ -176,9 +177,74 @@ class Rasterization_section:
         self.btn_poly_step3 = ttk.Button(btn_frame, text="4. Заливка", command=self.polygon_step3, state=tk.DISABLED)
         self.btn_poly_step3.pack(anchor='w', pady=2)
         
+        ttk.Button(btn_frame, text="Списки x-координат", command=self.show_y_buckets_window).pack(anchor='w', pady=5)
         ttk.Button(btn_frame, text="Очистить всё", command=self.clear_all).pack(anchor='w', pady=15)
 
+    def show_y_buckets_window(self):
+        if self.list_window is None or not self.list_window.winfo_exists():
+            self.list_window = tk.Toplevel(self.root)
+            self.list_window.title("Списки x-координат")
+            self.list_window.geometry("400x600")
+            
+            container = ttk.Frame(self.list_window)
+            container.pack(fill=tk.BOTH, expand=True)
+            
+            canvas = tk.Canvas(container)
+            scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+            self.buckets_frame = ttk.Frame(canvas)
+            
+            self.buckets_frame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+            
+            canvas.create_window((0, 0), window=self.buckets_frame, anchor="nw")
+            canvas.configure(yscrollcommand=scrollbar.set)
+            
+            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        else:
+            for widget in self.buckets_frame.winfo_children():
+                widget.destroy()
+        
+        self.update_y_buckets_display()
 
+    def update_y_buckets_display(self):
+        if not hasattr(self, 'buckets_frame') or not self.buckets_frame.winfo_exists():
+            return
+            
+        for widget in self.buckets_frame.winfo_children():
+            widget.destroy()
+        
+        if not self.y_buckets:
+            ttk.Label(self.buckets_frame, text="Нет данных", 
+                     font=('Arial', 10)).pack(pady=20)
+            return
+        
+        title_frame = ttk.Frame(self.buckets_frame)
+        title_frame.pack(fill=tk.X, pady=5)
+        
+        if self.step_state >= 2:
+            ttk.Label(title_frame, text="Списки после сортировки:", 
+                     font=('Arial', 12, 'bold')).pack()
+        else:
+            ttk.Label(title_frame, text="Списки до сортировки:", 
+                     font=('Arial', 12, 'bold')).pack()
+        
+        for y in sorted(self.y_buckets.keys()):
+            frame = ttk.Frame(self.buckets_frame)
+            frame.pack(fill=tk.X, pady=1, padx=10)
+            
+            y_label = ttk.Label(frame, text=f"y = {y}:", font=('Arial', 10, 'bold'), width=8)
+            y_label.pack(side=tk.LEFT)
+            
+            x_list = self.y_buckets[y]
+            x_text = ", ".join(map(str, x_list)) # преобразует список x для данной y в строку
+            
+            text_widget = tk.Text(frame, height=2, width=40, wrap=tk.WORD)
+            text_widget.insert('1.0', x_text)
+            text_widget.config(state=tk.DISABLED, font=('Arial', 9))
+            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
     def create_vertex_inputs(self): # поля ввода для вершин многоугольника
         for widget in self.vertex_inputs_frame.winfo_children():
@@ -189,8 +255,8 @@ class Rasterization_section:
         my_coordinates = [
             (1, 1),
             (2, 6),
-            (4, 4), 
-            (7, 5),
+            (4, 3), 
+            (7, 6),
             (8, 1),
         ]
 
@@ -214,7 +280,6 @@ class Rasterization_section:
             
             self.vertex_entries.append((x_entry, y_entry))
 
-
     def update_vertex_inputs(self): # обновляет количество полей ввода при изменении числа вершин
         try:
             num = self.num_vertices_var.get()
@@ -226,8 +291,6 @@ class Rasterization_section:
         except:
             self.num_vertices_var.set(3)
             self.create_vertex_inputs()
-
-
 
     def create_polygon_from_inputs(self): # прямоугольник из введённых координат
         self.clear_all()
@@ -248,12 +311,15 @@ class Rasterization_section:
 
         self.draw_grid()
         screen_vertices = [self.coords_to_screen(x, y) for x, y in self.vertices_world]
-        self.canvas.create_polygon(screen_vertices, outline='black', fill='', width=2, tags='outline')
+        self.canvas.create_polygon(screen_vertices, outline='black', fill='', width=2, tags='outline') # контур многоугольника
 
         self.btn_poly_step1.config(state=tk.NORMAL)
         self.btn_poly_step2.config(state=tk.DISABLED)
         self.btn_poly_step3.config(state=tk.DISABLED)
         
+        if self.list_window and self.list_window.winfo_exists():
+            self.list_window.destroy()
+            self.list_window = None
 
     def clear_all(self):
         self.section = None
@@ -271,6 +337,10 @@ class Rasterization_section:
         self.btn_poly_step3.config(state=tk.DISABLED)
         self.canvas.delete('pixel', 'fill', 'outline')
         self.draw_grid()
+        
+        if self.list_window and self.list_window.winfo_exists():
+            self.list_window.destroy()
+            self.list_window = None
 
     def rasterize_edge_brez(self, x1, y1, x2, y2):
         dx = abs(x2 - x1)
@@ -281,13 +351,12 @@ class Rasterization_section:
 
         x, y = x1, y1
         while True:
-            self.y_buckets.setdefault(y, []).append(x)
+
+            self.y_buckets.setdefault(y, []).append(x) # кладу с список все x-координаты вершин для y
+
             screen_x, screen_y = self.coords_to_screen(x, y)
-            self.canvas.create_oval(
-                screen_x - 2, screen_y - 2,
-                screen_x + 2, screen_y + 2,
-                fill='darkred', outline='darkred', tags='pixel'
-            )
+            self.canvas.create_oval( screen_x - 2, screen_y - 2, screen_x + 2, screen_y + 2, 
+                                    fill='darkred', outline='darkred', tags='pixel')
             self.edge_pixels.append((x, y))
             if x == x2 and y == y2:
                 break
@@ -310,14 +379,17 @@ class Rasterization_section:
         for i in range(len(self.polygon_world) - 1):
             x1, y1 = self.polygon_world[i]
             x2, y2 = self.polygon_world[i+1]
-            if y1 == y2:
+
+            if y1 == y2: #горизонтальное ребро
                 continue
-            if y1 > y2:
+
+            if y1 > y2: # упорядочиваение y1 <= y2 
                 x1, x2 = x2, x1
                 y1, y2 = y2, y1
             self.rasterize_edge_brez(x1, y1, x2, y2)
 
         if self.y_buckets:
+
             self.y_min = min(self.y_buckets.keys())
             self.y_max = max(self.y_buckets.keys())
         else:
@@ -325,35 +397,50 @@ class Rasterization_section:
 
         self.btn_poly_step2.config(state=tk.NORMAL)
         self.btn_poly_step1.config(state=tk.DISABLED)
+        
+        if self.list_window and self.list_window.winfo_exists():
+            self.update_y_buckets_display()
 
     def polygon_step2(self):
         if self.step_state != 1:
             return
+        
         self.step_state = 2
+
         for y in self.y_buckets:
-            self.y_buckets[y] = sorted(set(self.y_buckets[y]))
+            self.y_buckets[y] = sorted(self.y_buckets[y])
+
         self.btn_poly_step2.config(state=tk.DISABLED)
         self.btn_poly_step3.config(state=tk.NORMAL)
+        
+
+        if self.list_window and self.list_window.winfo_exists():
+            self.update_y_buckets_display()
 
     def polygon_step3(self):
         if self.step_state != 2:
             return
+        
         self.step_state = 3
+
         for y in range(self.y_min, self.y_max + 1):
             if y not in self.y_buckets:
                 continue
+
             x_list = self.y_buckets[y]
+
+            if len(x_list) % 2 != 0:
+                x_list = x_list[:-1]
+            
             for i in range(0, len(x_list) - 1, 2):
-                x_start = x_list[i]
-                x_end = x_list[i+1]
+                x_start = x_list[i] # x_{2i-1}
+                x_end = x_list[i+1] # x_{2i}
+
                 for x in range(x_start, x_end + 1):
                     screen_x, screen_y = self.coords_to_screen(x, y)
-                    # Закрашиваем целую клетку
-                    self.canvas.create_rectangle(
-                        screen_x - self.cell/2, screen_y - self.cell/2,
-                        screen_x + self.cell/2, screen_y + self.cell/2,
-                        fill='pink', outline='red', stipple='gray50', tags='fill'
-                    )
+                    self.canvas.create_rectangle( screen_x - self.cell/2, screen_y - self.cell/2,
+                                                 screen_x + self.cell/2, screen_y + self.cell/2,
+                                                 fill='pink', outline='red', stipple='gray50', tags='fill')
         self.canvas.tag_raise('outline')
         self.btn_poly_step3.config(state=tk.DISABLED)
 
