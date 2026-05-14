@@ -178,13 +178,13 @@ class Rasterization_section:
         self.btn_poly_step3 = ttk.Button(btn_frame, text="4. Заливка", command=self.polygon_step3, state=tk.DISABLED)
         self.btn_poly_step3.pack(anchor='w', pady=2)
         
-        ttk.Button(btn_frame, text="Списки x-координат", command=self.show_y_buckets_window).pack(anchor='w', pady=5)
+        ttk.Button(btn_frame, text="y-списки", command=self.show_y_buckets_window).pack(anchor='w', pady=5)
         ttk.Button(btn_frame, text="Очистить всё", command=self.clear_all).pack(anchor='w', pady=15)
 
     def show_y_buckets_window(self):
         if self.list_window is None or not self.list_window.winfo_exists():
             self.list_window = tk.Toplevel(self.root)
-            self.list_window.title("Списки x-координат")
+            self.list_window.title("y-списки")
             self.list_window.geometry("400x600")
             
             container = ttk.Frame(self.list_window)
