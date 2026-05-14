@@ -18,6 +18,8 @@ class Rasterization_section:
         self.polygon_world = [] # вершины многоугольника с замыканием
         self.y_buckets = {}
         self.edge_pixels = []
+        self.fill_queue = []  # очередь строк для построчной заливки
+        self.fill_idx = 0 # текущий индекс в очереди
         self.y_min = None
         self.y_max = None
         self.step_state = 0
@@ -146,8 +148,7 @@ class Rasterization_section:
         self.scrollable_frame = ttk.Frame(canvas)
         self.scrollable_frame.bind(
             "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
         canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
@@ -295,6 +296,8 @@ class Rasterization_section:
     def create_polygon_from_inputs(self): # прямоугольник из введённых координат
         self.clear_all()
         self.polygon_mode = True
+        self.fill_queue = []
+        self.fill_idx = 0
         
         self.vertices_world = []
         for x_entry, y_entry in self.vertex_entries:
@@ -395,6 +398,10 @@ class Rasterization_section:
         else:
             self.y_min = self.y_max = 0
 
+        
+        self.fill_queue = [y for y in range(self.y_min, self.y_max + 1) if y in self.y_buckets]
+        self.fill_idx = 0
+
         self.btn_poly_step2.config(state=tk.NORMAL)
         self.btn_poly_step1.config(state=tk.DISABLED)
         
@@ -416,21 +423,24 @@ class Rasterization_section:
 
         if self.list_window and self.list_window.winfo_exists():
             self.update_y_buckets_display()
+            
 
     def polygon_step3(self):
-        if self.step_state != 2:
+        if self.step_state != 2 and self.step_state != 3:
             return
         
         self.step_state = 3
-
-        for y in range(self.y_min, self.y_max + 1):
-            if y not in self.y_buckets:
-                continue
+        
+        if self.fill_idx < len(self.fill_queue):
+            y = self.fill_queue[self.fill_idx]
+            self.fill_idx += 1
+            
+            if y not in self.y_buckets: # пропускаю пустые строки
+                if self.fill_idx >= len(self.fill_queue):
+                    self.btn_poly_step3.config(state=tk.DISABLED)
+                return
 
             x_list = self.y_buckets[y]
-
-            if len(x_list) % 2 != 0:
-                x_list = x_list[:-1]
             
             for i in range(0, len(x_list) - 1, 2):
                 x_start = x_list[i] # x_{2i-1}
@@ -441,8 +451,11 @@ class Rasterization_section:
                     self.canvas.create_rectangle( screen_x - self.cell/2, screen_y - self.cell/2,
                                                  screen_x + self.cell/2, screen_y + self.cell/2,
                                                  fill='pink', outline='red', stipple='gray50', tags='fill')
-        self.canvas.tag_raise('outline')
-        self.btn_poly_step3.config(state=tk.DISABLED)
+            
+            self.canvas.tag_raise('outline')
+            
+            if self.fill_idx >= len(self.fill_queue):
+                self.btn_poly_step3.config(state=tk.DISABLED)
 
 if __name__ == "__main__":
     window = tk.Tk()
