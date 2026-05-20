@@ -144,21 +144,26 @@ class Jarvis_algorithm:
         scrollbar = ttk.Scrollbar(self.points_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
         
-        scrollable_frame.bind( "<Configure>", #событие, которое вызывается когда виджет изменяется
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))) #область прокрутки ограничивающего проямоугольника
+        scrollable_frame.bind("<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
 
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw") #туда кладем область прокрутки
-        canvas.configure(yscrollcommand=scrollbar.set) #связывает вертикальную полосу прокрутки с областью прокрутки
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
 
-        #поля ввода
+        examples = [(-3, 0), (-3, -2), (-1, 1), (0, -3), (0, 1), (0, 3), (1, 0), (2, 5), (3, 0)]
+
         for i in range(num_points):
             point_frame = ttk.Frame(scrollable_frame)
             point_frame.pack(fill=tk.X, pady=1)
             
             ttk.Label(point_frame, text=f"{i+1}", width=2, font=('Arial', 8), style='Purple.TLabel').pack(side=tk.LEFT)
             
-            x_var = tk.StringVar(value="0")
-            y_var = tk.StringVar(value="0")
+            if i < len(examples):
+                x_var = tk.StringVar(value=str(examples[i][0]))
+                y_var = tk.StringVar(value=str(examples[i][1]))
+            else:
+                x_var = tk.StringVar(value="0")
+                y_var = tk.StringVar(value="0")
             
             x_entry = ttk.Entry(point_frame, textvariable=x_var, width=10, font=('Arial', 8))
             x_entry.pack(side=tk.LEFT, padx=(8, 0))
@@ -169,8 +174,7 @@ class Jarvis_algorithm:
             self.point_entries.append((x_var, y_var))
         
         canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-        
+        scrollbar.pack(side="right", fill="y")    
 
     def get_center(self):
         w_center_x, w_center_y = 0, 0
@@ -218,36 +222,37 @@ class Jarvis_algorithm:
             if p.x < start.x or (p.x == start.x and p.y < start.y):
                 start = p
         return start
-    
     def alg_jarvis(self):
         self.algorithm_steps = []
         start = self.find_start_point()
 
         hull = []
         current_point = start
+
         while True:
             hull.append(current_point)
             self.algorithm_steps.append(hull.copy())
 
             next = None
             for i in self.points:
-                if i == current_point: continue
-                if next == None: next = i
+                if i.x == current_point.x and i.y == current_point.y: 
+                    continue
+                if next == None: 
+                    next = i
 
-                cross = self.cross_product(current_point, next, i) #косое произведение для определение след.точки
+                cross = self.cross_product(current_point, next, i)
                 if cross < 0:
                     next = i
                 elif abs(cross) < 1e-9:
-                    if self.distance_sq(current_point, next) > self.distance_sq(current_point, i):
+                    if self.distance_sq(current_point, next) < self.distance_sq(current_point, i):
                         next = i
             
             current_point = next
-            if current_point == start:
+            if current_point.x == start.x and current_point.y == start.y:
                 break
 
         hull.append(start)
         self.algorithm_steps.append(hull.copy())
-
         return hull
 
 
