@@ -191,9 +191,6 @@ class Jarvis_algorithm:
     
 
     def display_points(self):
-        if not hasattr(self, 'point_entries'):
-            return
-        
         self.canvas.delete('point')
         
         for i, (x_var, y_var) in enumerate(self.point_entries):
@@ -222,6 +219,8 @@ class Jarvis_algorithm:
             if p.x < start.x or (p.x == start.x and p.y < start.y):
                 start = p
         return start
+    
+
     def alg_jarvis(self):
         self.algorithm_steps = []
         start = self.find_start_point()
@@ -231,15 +230,24 @@ class Jarvis_algorithm:
 
         while True:
             hull.append(current_point)
-            self.algorithm_steps.append(hull.copy())
+            self.algorithm_steps.append({
+                'hull': hull.copy(),
+                'checking': None
+            })
 
             next = None
             for i in self.points:
                 if i.x == current_point.x and i.y == current_point.y: 
                     continue
+
+                self.algorithm_steps.append({
+                    'hull': hull.copy(),
+                    'checking': i
+                })
+
                 if next == None: 
                     next = i
-
+        
                 cross = self.cross_product(current_point, next, i)
                 if cross < 0:
                     next = i
@@ -252,23 +260,26 @@ class Jarvis_algorithm:
                 break
 
         hull.append(start)
-        self.algorithm_steps.append(hull.copy())
+        self.algorithm_steps.append({
+            'hull': hull.copy(),
+            'checking': None
+        })
+        #self.algorithm_steps.append(hull.copy())
         return hull
 
 
 
     def show_next_step(self):
         if self.current_step == -1:
-                self.points = []
-                if hasattr(self, 'point_entries'):
-                    for x_var, y_var in self.point_entries:
-                        x = float(x_var.get())
-                        y = float(y_var.get())
-                        self.points.append(Point(x, y))
+            self.points = []
+            for x_var, y_var in self.point_entries:
+                x = float(x_var.get())
+                y = float(y_var.get())
+                self.points.append(Point(x, y))
             
-                self.algorithm_steps = []
-                self.convex_hull = self.alg_jarvis()
-                self.current_step = 0
+            self.algorithm_steps = []
+            self.convex_hull = self.alg_jarvis()
+            self.current_step = 0
             
         if self.current_step < len(self.algorithm_steps):
             self.draw_step()
@@ -280,9 +291,17 @@ class Jarvis_algorithm:
         if self.current_step < 0 or self.current_step >= len(self.algorithm_steps):
             return
         self.canvas.delete('hull_line')
+        self.canvas.delete('highlight')
 
-        current_hull = self.algorithm_steps[self.current_step]
+        step = self.algorithm_steps[self.current_step]
+        current_hull = step['hull']
 
+        if step['checking']:
+            p = step['checking']
+            screen_x, screen_y = self.coords_to_screen(p.x, p.y)
+            self.canvas.create_oval(screen_x - 5, screen_y - 5, screen_x + 5, screen_y + 5,
+                                    fill='purple', width=2, tags='highlight')
+                
         if len(current_hull) >= 2:
             for i in range(len(current_hull) - 1):
                 p1 = current_hull[i]
